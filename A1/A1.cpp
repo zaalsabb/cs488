@@ -1,4 +1,4 @@
-/#include "A1.hpp"
+#include "A1.hpp"
 #include "cs488-framework/GlErrorCheck.hpp"
 
 #include <iostream>
