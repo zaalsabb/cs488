@@ -115,12 +115,59 @@ void A1::initGrid()
 	glGenBuffers( 1, &m_grid_vbo );
 	glBindBuffer( GL_ARRAY_BUFFER, m_grid_vbo );
 	glBufferData( GL_ARRAY_BUFFER, sz*sizeof(float),
-		verts, GL_STATIC_DRAW );
+		      verts, GL_STATIC_DRAW );
 
 	// Specify the means of extracting the position values properly.
 	GLint posAttrib = m_shader.getAttribLocation( "position" );
 	glEnableVertexAttribArray( posAttrib );
 	glVertexAttribPointer( posAttrib, 3, GL_FLOAT, GL_FALSE, 0, nullptr );
+
+
+	static const GLfloat cube_vertices[] = {
+	    -0.5f,-0.5f,-0.5f, 
+	    -0.5f,-0.5f, 0.5f,
+	    -0.5f, 0.5f, 0.5f, 
+	    0.5f, 0.5f,-0.5f, 
+	    -0.5f,-0.5f,-0.5f,
+	    -0.5f, 0.5f,-0.5f, 
+	    0.5f,-0.5f, 0.5f,
+	    -0.5f,-0.5f,-0.5f,
+	    0.5f,-0.5f,-0.5f,
+	    0.5f, 0.5f,-0.5f,
+	    0.5f,-0.5f,-0.5f,
+	    -0.5f,-0.5f,-0.5f,
+	    -0.5f,-0.5f,-0.5f,
+	    -0.5f, 0.5f, 0.5f,
+	    -0.5f, 0.5f,-0.5f,
+	    0.5f,-0.5f, 0.5f,
+	    -0.5f,-0.5f, 0.5f,
+	    -0.5f,-0.5f,-0.5f,
+	    -0.5f, 0.5f, 0.5f,
+	    -0.5f,-0.5f, 0.5f,
+	    0.5f,-0.5f, 0.5f,
+	   0.5f, 0.5f, 0.5f,
+	    0.5f,-0.5f,-0.5f,
+	    0.5f, 0.5f,-0.5f,
+	    0.5f,-0.5f,-0.5f,
+	    0.5f, 0.5f, 0.5f,
+	    0.5f,-0.5f, 0.5f,
+	    0.5f, 0.5f, 0.5f,
+	    0.5f, 0.5f,-0.5f,
+	    -0.5f, 0.5f,-0.5f,
+	    0.5f, 0.5f, 0.5f,
+	    -0.5f, 0.5f,-0.5f,
+	    -0.5f, 0.5f, 0.5f,
+	    0.5f, 0.5f, 0.5f,
+	    -0.5f, 0.5f, 0.5f,
+	    0.5f,-0.5f, 0.5f
+	};
+
+	glGenVertexArrays( 1, &m_cube_vao );
+	glBindVertexArray( m_cube_vao );
+
+	glGenBuffers( 1, &m_cube_vbo );
+	glBindBuffer( GL_ARRAY_BUFFER, m_cube_vbo );
+	glBufferData(GL_ARRAY_BUFFER, sizeof(cube_vertices), cube_vertices, GL_STATIC_DRAW);
 
 	// Reset state to prevent rogue code from messing with *my* 
 	// stuff!
@@ -220,10 +267,46 @@ void A1::draw()
 
 		// Just draw the grid for now.
 		glBindVertexArray( m_grid_vao );
+		glBindBuffer( GL_ARRAY_BUFFER, m_grid_vao );
+		glEnableVertexAttribArray( posAttrib );
+		glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 0, 0);
 		glUniform3f( col_uni, 1, 1, 1 );
 		glDrawArrays( GL_LINES, 0, (3+DIM)*4 );
 
 		// Draw the cubes
+		// setup buffer
+		glBindVertexArray( m_cube_vao );
+		glBindBuffer( GL_ARRAY_BUFFER, m_cube_vbo );
+		glEnableVertexAttribArray( posAttrib );
+		glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+		// draw vertical edges
+	        for( int idx = 0; idx < DIM+2; ++idx )
+		{
+	            mat4 cube_model;
+
+		    cube_model = glm::translate(cube_model, glm::vec3(-0.5f-DIM/2, 0.0f, 0.5f-idx+DIM/2));
+      		    glUniformMatrix4fv( M_uni, 1, GL_FALSE, value_ptr( cube_model ) );
+   		    glDrawArrays(GL_TRIANGLES, 0, 12*3);
+
+		    cube_model = glm::translate(cube_model, glm::vec3(DIM+1, 0.0f, 0.0f));
+      		    glUniformMatrix4fv( M_uni, 1, GL_FALSE, value_ptr( cube_model ) );
+   		    glDrawArrays(GL_TRIANGLES, 0, 12*3);
+		}
+		// draw horizontal edges
+	        for( int idx = 0; idx < DIM+2; ++idx )
+		{
+	            mat4 cube_model;
+
+		    cube_model = glm::translate(cube_model, glm::vec3(0.5f-idx+DIM/2, 0.0f, -0.5f-DIM/2));
+      		    glUniformMatrix4fv( M_uni, 1, GL_FALSE, value_ptr( cube_model ) );
+   		    glDrawArrays(GL_TRIANGLES, 0, 12*3);
+
+		    cube_model = glm::translate(cube_model, glm::vec3(0.0f, 0.0f, DIM+1));
+      		    glUniformMatrix4fv( M_uni, 1, GL_FALSE, value_ptr( cube_model ) );
+   		    glDrawArrays(GL_TRIANGLES, 0, 12*3);
+		}
+
 		// Highlight the active square.
 	m_shader.disable();
 
