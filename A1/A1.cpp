@@ -256,6 +256,7 @@ void A1::draw()
 {
 	// Create a global transformation for the model (centre it).
 	mat4 W;
+	float height = 0.5f;
 	W = glm::translate( W, vec3( -float(DIM)/2.0f, 0, -float(DIM)/2.0f ) );
 
 	m_shader.enable();
@@ -286,6 +287,10 @@ void A1::draw()
 	            mat4 cube_model;
 
 		    cube_model = glm::translate(cube_model, glm::vec3(-0.5f-DIM/2, 0.0f, 0.5f-idx+DIM/2));
+		    cube_model = glm::scale(
+				cube_model,
+				glm::vec3( 1.0f, height, 1.0f )
+				);
       		    glUniformMatrix4fv( M_uni, 1, GL_FALSE, value_ptr( cube_model ) );
    		    glDrawArrays(GL_TRIANGLES, 0, 12*3);
 
@@ -299,6 +304,10 @@ void A1::draw()
 	            mat4 cube_model;
 
 		    cube_model = glm::translate(cube_model, glm::vec3(0.5f-idx+DIM/2, 0.0f, -0.5f-DIM/2));
+		    cube_model = glm::scale(
+				cube_model,
+				glm::vec3( 1.0f, height, 1.0f )
+				);
       		    glUniformMatrix4fv( M_uni, 1, GL_FALSE, value_ptr( cube_model ) );
    		    glDrawArrays(GL_TRIANGLES, 0, 12*3);
 
