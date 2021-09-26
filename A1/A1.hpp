@@ -44,13 +44,11 @@ private:
 	GLuint m_cube_vao; // Vertex Array Object
 	GLuint m_cube_vbo; // Vertex Buffer Object
 
-<<<<<<< HEAD
 	float walls_height = 1.0f;
 	bool walls_enabled;
 	int avatar_x;
 	int avatar_y;
-=======
->>>>>>> 4a6d78dac86d2e6c8541d35fda7fec12cfe3246e
+
 	GLint posAttrib;
 
 	// Matrices controlling the camera and projection.
