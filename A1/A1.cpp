@@ -15,6 +15,10 @@ using namespace glm;
 using namespace std;
 
 static const size_t DIM = 16;
+<<<<<<< HEAD
+Maze m(DIM);
+=======
+>>>>>>> 4a6d78dac86d2e6c8541d35fda7fec12cfe3246e
 
 //----------------------------------------------------------------------------------------
 // Constructor
@@ -44,12 +48,17 @@ void A1::init()
 	// same random numbers
 	cout << "Random number seed = " << rseed << endl;
 	
+<<<<<<< HEAD
+	avatar_x = (int)DIM/2+1;
+	avatar_y = (int)DIM/2+1;
+=======
 
 	// DELETE FROM HERE...
 	Maze m(DIM);
 	m.digMaze();
 	m.printMaze();
 	// ...TO HERE
+>>>>>>> 4a6d78dac86d2e6c8541d35fda7fec12cfe3246e
 	
 	// Set the background colour.
 	glClearColor( 0.3, 0.5, 0.7, 1.0 );
@@ -248,15 +257,26 @@ void A1::guiLogic()
 	}
 }
 
+<<<<<<< HEAD
+
+=======
+>>>>>>> 4a6d78dac86d2e6c8541d35fda7fec12cfe3246e
 //----------------------------------------------------------------------------------------
 /*
  * Called once per frame, after guiLogic().
  */
 void A1::draw()
+<<<<<<< HEAD
+{	
+	
+	// Create a global transformation for the model (centre it).
+	mat4 W;
+=======
 {
 	// Create a global transformation for the model (centre it).
 	mat4 W;
 	float height = 0.5f;
+>>>>>>> 4a6d78dac86d2e6c8541d35fda7fec12cfe3246e
 	W = glm::translate( W, vec3( -float(DIM)/2.0f, 0, -float(DIM)/2.0f ) );
 
 	m_shader.enable();
@@ -275,11 +295,71 @@ void A1::draw()
 		glDrawArrays( GL_LINES, 0, (3+DIM)*4 );
 
 		// Draw the cubes
+<<<<<<< HEAD
+		// setup buffers and color
+=======
 		// setup buffer
+>>>>>>> 4a6d78dac86d2e6c8541d35fda7fec12cfe3246e
 		glBindVertexArray( m_cube_vao );
 		glBindBuffer( GL_ARRAY_BUFFER, m_cube_vbo );
 		glEnableVertexAttribArray( posAttrib );
 		glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 0, 0);
+<<<<<<< HEAD
+		GLint uniformLocation_colour = m_shader.getUniformLocation("colour");
+
+		// Draw maze
+	        for( int idy = 0; idy < DIM+2; ++idy )
+		{
+		    for( int idx = 0; idx < DIM+2; ++idx )
+		    {
+		        
+		        float x = 0.5f-idx+DIM/2;
+		        float y = 0.5f-idy+DIM/2;
+
+		        int maze_value = m.getValue(DIM-idy, DIM-idx);
+
+		        if (idx == avatar_x & idy == avatar_y) 
+		        {
+				mat4 avatar_model;
+				glUniform3f(uniformLocation_colour, 0.0f, 1.0f, 0.0f);
+			        avatar_model = glm::translate(avatar_model, glm::vec3(x, 0.5f, y));
+			        avatar_model = glm::scale(
+					avatar_model,
+					glm::vec3( 1.0f, 1.0f, 1.0f )
+					);
+	      		        glUniformMatrix4fv( M_uni, 1, GL_FALSE, value_ptr( avatar_model ) );
+	   		        glDrawArrays(GL_TRIANGLES, 0, 12*3);				
+			}
+		        if (maze_value == 1 | (walls_enabled &
+			    ( idx == 0 | idx == DIM+1 
+		            | idy == 0 | idy == DIM+1))) 
+		        {
+				mat4 wall_model;
+				glUniform3f(uniformLocation_colour, 1.0f, 1.0f, 1.0f);
+			        wall_model = glm::translate(wall_model, glm::vec3(x, walls_height/2, y));
+			        wall_model = glm::scale(
+					wall_model,
+					glm::vec3( 1.0f, walls_height, 1.0f )
+					);
+	      		        glUniformMatrix4fv( M_uni, 1, GL_FALSE, value_ptr( wall_model ) );
+	   		        glDrawArrays(GL_TRIANGLES, 0, 12*3);
+		        } else {
+
+				glUniform3f(uniformLocation_colour, 0.0f, 0.0f, 1.0f);
+				mat4 floor_model;
+			        floor_model = glm::translate(floor_model, glm::vec3(x, -0.01f, y));
+				floor_model = glm::scale(
+					floor_model,
+					glm::vec3( 1.0f, 0.00001f, 1.0f )
+					);
+				glUniformMatrix4fv( M_uni, 1, GL_FALSE, value_ptr( floor_model ) );
+				glDrawArrays(GL_TRIANGLES, 0, 12*3);
+}
+		    }
+		}
+
+	// Highlight the active square.
+=======
 
 		// draw vertical edges
 	        for( int idx = 0; idx < DIM+2; ++idx )
@@ -317,6 +397,7 @@ void A1::draw()
 		}
 
 		// Highlight the active square.
+>>>>>>> 4a6d78dac86d2e6c8541d35fda7fec12cfe3246e
 	m_shader.disable();
 
 	// Restore defaults
@@ -413,8 +494,56 @@ bool A1::keyInputEvent(int key, int action, int mods) {
 
 	// Fill in with event handling code...
 	if( action == GLFW_PRESS ) {
+<<<<<<< HEAD
+		if (key == GLFW_KEY_SPACE) {
+			cout << "space key pressed" << endl;
+
+			// Increase wall height by 0.5.
+			walls_height += 0.5f;
+
+			eventHandled = true;
+		} else if (key == GLFW_KEY_BACKSPACE) {
+			cout << "backspace key pressed" << endl;
+
+			// decrease wall height by 0.5.
+			walls_height -= 0.5f;
+			if (walls_height < 0) {walls_height = 0.001f;};
+
+			eventHandled = true;
+		} else if (key == GLFW_KEY_D) {
+			cout << "D key pressed" << endl;
+
+			walls_enabled = true;
+			m.digMaze();
+			m.printMaze();
+		    	for( int idx = 1; idx < DIM+1; ++idx ) 
+			{
+			   if (m.getValue(0, DIM-idx)==0){
+				avatar_x = idx;
+				avatar_y = DIM;
+			   }
+			}
+
+			eventHandled = true;
+
+		} else if (key == GLFW_KEY_R) {
+			cout << "R key pressed" << endl;
+
+			m.reset();
+			walls_enabled = false;
+			avatar_x = (int)DIM/2+1;
+			avatar_y = (int)DIM/2+1;			
+
+			eventHandled = true;
+		}
+	}
+
+
+
+=======
 		// Respond to some key events.
 	}
 
+>>>>>>> 4a6d78dac86d2e6c8541d35fda7fec12cfe3246e
 	return eventHandled;
 }
