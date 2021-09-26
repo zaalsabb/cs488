@@ -47,8 +47,8 @@ void A1::init()
 	// same random numbers
 	cout << "Random number seed = " << rseed << endl;
 	
-	avatar_x = (int)DIM/2+1;
-	avatar_y = (int)DIM/2+1;
+	avatar_pos[0] = (int)DIM/2+1;
+	avatar_pos[1] = (int)DIM/2+1;
 
 	// Set the background colour.
 	glClearColor( 0.3, 0.5, 0.7, 1.0 );
@@ -203,6 +203,7 @@ void A1::guiLogic()
 	static bool showTestWindow(false);
 	static bool showDebugWindow(true);
 
+
 	ImGuiWindowFlags windowFlags(ImGuiWindowFlags_AlwaysAutoResize);
 	float opacity(0.5f);
 
@@ -221,14 +222,50 @@ void A1::guiLogic()
 		// displayed.
 
 		ImGui::PushID( 0 );
-		ImGui::ColorEdit3( "##Colour", colour );
-		ImGui::SameLine();
-		if( ImGui::RadioButton( "##Col", &current_col, 0 ) ) {
+		
+		if( ImGui::RadioButton( "Floor Color", &current_col, 0 ) ) {
+			colour[0] = floor_color[0];
+			colour[1] = floor_color[1];
+			colour[2] = floor_color[2];
+
 			// Select this colour.
 		}
+		if( ImGui::RadioButton( "Wall Color", &current_col, 1 ) ) {
+			colour[0] = wall_color[0];
+			colour[1] = wall_color[1];
+			colour[2] = wall_color[2];	
+			// Select this colour.
+		}
+		if( ImGui::RadioButton( "Avatar Color", &current_col, 2 ) ) {
+			// Select this colour.
+			colour[0] = avatar_color[0];
+			colour[1] = avatar_color[1];
+			colour[2] = avatar_color[2];
+		}
+
+
+		ImGui::ColorEdit3( "##Colour", colour );
+		ImGui::SameLine();
 		ImGui::PopID();
 
-/*
+		if (current_col == 0)
+		{
+			floor_color[0] = colour[0];
+			floor_color[1] = colour[1];
+			floor_color[2] = colour[2];	
+		} else if (current_col == 1)
+		{
+			wall_color[0] = colour[0];
+			wall_color[1] = colour[1];
+			wall_color[2] = colour[2];
+		} else if (current_col == 2)
+		{
+			avatar_color[0] = colour[0];
+			avatar_color[1] = colour[1];
+			avatar_color[2] = colour[2];
+		}
+
+//*
 		// For convenience, you can uncomment this to show ImGui's massive
 		// demonstration window right in your application.  Very handy for
 		// browsing around to get the widget you want.  Then look in 
@@ -236,7 +273,7 @@ void A1::guiLogic()
 		if( ImGui::Button( "Test Window" ) ) {
 			showTestWindow = !showTestWindow;
 		}
-*/
+//*/
 
 		ImGui::Text( "Framerate: %.1f FPS", ImGui::GetIO().Framerate );
 
@@ -293,10 +330,10 @@ void A1::draw()
 
 	        int maze_value = m.getValue(DIM-idy, DIM-idx);
 
-	        if (idx == avatar_x & idy == avatar_y) 
+	        if (idx == avatar_pos[0] & idy == avatar_pos[1]) 
 	        {
 			mat4 avatar_model;
-			glUniform3f(uniformLocation_colour, 0.0f, 1.0f, 0.0f);
+			glUniform3f(uniformLocation_colour, avatar_color[0], avatar_color[1], avatar_color[2]);
 		        avatar_model = glm::translate(avatar_model, glm::vec3(x, 0.5f, y));
 		        avatar_model = glm::scale(
 				avatar_model,
@@ -310,7 +347,7 @@ void A1::draw()
 	            | idy == 0 | idy == DIM+1))) 
 	        {
 			mat4 wall_model;
-			glUniform3f(uniformLocation_colour, 1.0f, 1.0f, 1.0f);
+			glUniform3f(uniformLocation_colour, wall_color[0], wall_color[1], wall_color[2]);
 		        wall_model = glm::translate(wall_model, glm::vec3(x, walls_height/2, y));
 		        wall_model = glm::scale(
 				wall_model,
@@ -320,7 +357,7 @@ void A1::draw()
    		        glDrawArrays(GL_TRIANGLES, 0, 12*3);
 	        } else {
 
-			glUniform3f(uniformLocation_colour, 0.0f, 0.0f, 1.0f);
+			glUniform3f(uniformLocation_colour, floor_color[0], floor_color[1], floor_color[2]);
 			mat4 floor_model;
 		        floor_model = glm::translate(floor_model, glm::vec3(x, -0.01f, y));
 			floor_model = glm::scale(
@@ -454,8 +491,8 @@ bool A1::keyInputEvent(int key, int action, int mods) {
 		    	for( int idx = 1; idx < DIM+1; ++idx ) 
 			{
 			   if (m.getValue(0, DIM-idx)==0){
-				avatar_x = idx;
-				avatar_y = DIM;
+				avatar_pos[0] = idx;
+				avatar_pos[1] = DIM;
 			   }
 			}
 
@@ -466,11 +503,78 @@ bool A1::keyInputEvent(int key, int action, int mods) {
 
 			m.reset();
 			walls_enabled = false;
-			avatar_x = (int)DIM/2+1;
-			avatar_y = (int)DIM/2+1;			
+			avatar_pos[0] = (int)DIM/2+1;
+			avatar_pos[1] = (int)DIM/2+1;			
+
+			eventHandled = true;
+
+		} else if (key == GLFW_KEY_DOWN) {
+			cout << "Down key pressed" << endl;
+
+			if (mods == GLFW_MOD_SHIFT) 
+			{
+				avatar_pos[1] += -1;
+				m.setValue(DIM-avatar_pos[1], DIM-avatar_pos[0],0);
+			} 
+			else 
+			{
+				if (m.getValue(DIM-(avatar_pos[1]-1), DIM-avatar_pos[0]) == 0) {
+					avatar_pos[1] += -1;
+				}
+			}	
+
+			eventHandled = true;
+		} else if (key == GLFW_KEY_UP) {
+			cout << "Up key pressed" << endl;
+
+				if (mods == GLFW_MOD_SHIFT) 
+			{
+				avatar_pos[1] += 1;
+				m.setValue(DIM-avatar_pos[1], DIM-avatar_pos[0],0);
+			} 
+			else 
+			{
+				if (m.getValue(DIM-(avatar_pos[1]+1), DIM-avatar_pos[0]) == 0) {
+					avatar_pos[1] += 1;
+				}
+			}		
+
+			eventHandled = true;
+		} else if (key == GLFW_KEY_LEFT) {
+			cout << "Left key pressed" << endl;
+
+			if (mods == GLFW_MOD_SHIFT) 
+			{
+				avatar_pos[0] += 1;
+				m.setValue(DIM-avatar_pos[1], DIM-avatar_pos[0],0);
+			} 
+			else 
+			{
+				if (m.getValue(DIM-(avatar_pos[1]), DIM-(avatar_pos[0]+1)) == 0) {
+					avatar_pos[0] += 1;
+				}
+			}		
+
+			eventHandled = true;
+		} else if (key == GLFW_KEY_RIGHT) {
+			cout << "Right key pressed" << endl;
+
+			if (mods == GLFW_MOD_SHIFT) 
+			{
+				avatar_pos[0] += -1;
+				m.setValue(DIM-avatar_pos[1], DIM-avatar_pos[0],0);
+			} 
+			else 
+			{
+				if (m.getValue(DIM-(avatar_pos[1]), DIM-(avatar_pos[0]-1)) == 0) {
+					avatar_pos[0] += -1;
+				}
+			}		
 
 			eventHandled = true;
 		}
+
+
 	}
 
 	return eventHandled;

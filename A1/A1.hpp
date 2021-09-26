@@ -46,8 +46,7 @@ private:
 
 	float walls_height = 1.0f;
 	bool walls_enabled;
-	int avatar_x;
-	int avatar_y;
+	int avatar_pos[2];
 
 	GLint posAttrib;
 
@@ -57,4 +56,8 @@ private:
 
 	float colour[3];
 	int current_col;
+
+	float floor_color[3] = {0.0f,0.0f,0.0f};
+	float wall_color[3] = {1.0f,1.0f,0.0f};
+	float avatar_color[3] = {0.0f,1.0f,0.0f};;
 };
