@@ -19,6 +19,7 @@ protected:
 	virtual void guiLogic() override;
 	virtual void draw() override;
 	virtual void cleanup() override;
+	virtual void Reset();
 
 	virtual bool cursorEnterWindowEvent(int entered) override;
 	virtual bool mouseMoveEvent(double xPos, double yPos) override;
@@ -44,6 +45,10 @@ private:
 	GLuint m_cube_vao; // Vertex Array Object
 	GLuint m_cube_vbo; // Vertex Buffer Object
 
+	GLuint m_sphere_vao; // Vertex Array Object
+	GLuint m_sphere_vbo; // Vertex Buffer Object
+	int sphere_size;
+
 	float walls_height = 1.0f;
 	bool walls_enabled;
 	int avatar_pos[2];
@@ -59,5 +64,10 @@ private:
 
 	float floor_color[3] = {0.0f,0.0f,0.0f};
 	float wall_color[3] = {1.0f,1.0f,0.0f};
-	float avatar_color[3] = {0.0f,1.0f,0.0f};;
+	float avatar_color[3] = {0.0f,1.0f,0.0f};
+
+	float zoom = 1.0f;
+	float rot = 0.0f;
+	int xPos0 = 0;
+
 };

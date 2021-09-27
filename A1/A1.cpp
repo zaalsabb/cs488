@@ -2,6 +2,7 @@
 #include "cs488-framework/GlErrorCheck.hpp"
 
 #include <iostream>
+#include <vector>
 
 #include <sys/types.h>
 #include <unistd.h>
@@ -17,7 +18,7 @@ using namespace std;
 static const size_t DIM = 16;
 
 Maze m(DIM);
-
+float PI = 3.1415;
 
 //----------------------------------------------------------------------------------------
 // Constructor
@@ -110,7 +111,6 @@ void A1::initGrid()
 	glGenVertexArrays( 1, &m_grid_vao );
 	glBindVertexArray( m_grid_vao );
 
-	// Create the cube vertex buffer
 	glGenBuffers( 1, &m_grid_vbo );
 	glBindBuffer( GL_ARRAY_BUFFER, m_grid_vbo );
 	glBufferData( GL_ARRAY_BUFFER, sz*sizeof(float),
@@ -121,6 +121,8 @@ void A1::initGrid()
 	glEnableVertexAttribArray( posAttrib );
 	glVertexAttribPointer( posAttrib, 3, GL_FLOAT, GL_FALSE, 0, nullptr );
 
+
+	// Create the cube vertex buffer
 
 	static const GLfloat cube_vertices[] = {
 	    -0.5f,-0.5f,-0.5f, 
@@ -167,6 +169,61 @@ void A1::initGrid()
 	glGenBuffers( 1, &m_cube_vbo );
 	glBindBuffer( GL_ARRAY_BUFFER, m_cube_vbo );
 	glBufferData(GL_ARRAY_BUFFER, sizeof(cube_vertices), cube_vertices, GL_STATIC_DRAW);
+
+	// Create the sphere vertex buffer
+
+	int sectorCount = 100;
+	float sectorStep = 2 * PI / sectorCount;
+	float stackStep = PI / sectorCount;
+	float sectorAngle, stackAngle;
+	std::vector<float> sphere_vertices;
+
+	float x,y,z,xy,x0,y0;
+	float radius = 0.5f;
+
+	for(int i = 0; i < sectorCount; ++i)
+	{
+
+	    stackAngle = PI / 2 - i * stackStep;        // starting from pi/2 to -pi/2
+	    xy = radius * cosf(stackAngle);             // r * cos(u)
+	    z = radius * sinf(stackAngle);              // r * sin(u)
+
+	    x0 = xy * cosf(sectorAngle);            
+	    y0 = xy * sinf(sectorAngle); 
+
+
+	    // add (sectorCount+1) vertices per stack
+	    // the first and last vertices have same position and normal, but different tex coords
+	    for(int j = 0; j <= sectorCount; ++j)
+	    {
+
+		sectorAngle = j * sectorStep;           // starting from 0 to 2pi
+
+		// vertex position (x, y, z)
+		x = xy * cosf(sectorAngle);            
+		y = xy * sinf(sectorAngle);             
+         
+		sphere_vertices.push_back(x);
+		sphere_vertices.push_back(y);
+		sphere_vertices.push_back(z);
+
+		sphere_vertices.push_back(x0);
+		sphere_vertices.push_back(y0);
+		sphere_vertices.push_back(z);
+
+		x0 = x;
+		y0 = y;
+
+	    }
+	}
+	sphere_size = sphere_vertices.size();
+
+	glGenVertexArrays( 1, &m_sphere_vao );
+	glBindVertexArray( m_sphere_vao );
+
+	glGenBuffers( 1, &m_sphere_vbo );
+	glBindBuffer( GL_ARRAY_BUFFER, m_sphere_vbo );
+	glBufferData(GL_ARRAY_BUFFER, sphere_size*6, &sphere_vertices[0], GL_STATIC_DRAW);
 
 	// Reset state to prevent rogue code from messing with *my* 
 	// stuff!
@@ -245,8 +302,22 @@ void A1::guiLogic()
 
 
 		ImGui::ColorEdit3( "##Colour", colour );
-		ImGui::SameLine();
+		//ImGui::SameLine();
 		ImGui::PopID();
+
+		if( ImGui::Button( "Regen Maze" ) ) {
+			cout << "Maze Regenerated" << endl;
+			walls_enabled = true;
+			m.digMaze();
+			m.printMaze();
+		    	for( int idx = 1; idx < DIM+1; ++idx ) 
+			{
+			   if (m.getValue(0, DIM-idx)==0){
+				avatar_pos[0] = idx;
+				avatar_pos[1] = DIM;
+			   }
+			}
+		}
 
 		if (current_col == 0)
 		{
@@ -265,7 +336,12 @@ void A1::guiLogic()
 			avatar_color[2] = colour[2];
 		}
 
-//*
+		if( ImGui::Button( "Reset Maze" ) ) {
+			cout << "Maze Reset" << endl;
+			Reset();	
+		}
+
+/*
 		// For convenience, you can uncomment this to show ImGui's massive
 		// demonstration window right in your application.  Very handy for
 		// browsing around to get the widget you want.  Then look in 
@@ -273,7 +349,7 @@ void A1::guiLogic()
 		if( ImGui::Button( "Test Window" ) ) {
 			showTestWindow = !showTestWindow;
 		}
-//*/
+*/
 
 		ImGui::Text( "Framerate: %.1f FPS", ImGui::GetIO().Framerate );
 
@@ -294,6 +370,7 @@ void A1::draw()
 	// Create a global transformation for the model (centre it).
 	mat4 W;
 
+	W = glm::rotate(W, rot, glm::vec3(0.0f, 1.0f, 0.0f));
 	W = glm::translate( W, vec3( -float(DIM)/2.0f, 0, -float(DIM)/2.0f ) );
 
 	m_shader.enable();
@@ -330,24 +407,13 @@ void A1::draw()
 
 	        int maze_value = m.getValue(DIM-idy, DIM-idx);
 
-	        if (idx == avatar_pos[0] & idy == avatar_pos[1]) 
-	        {
-			mat4 avatar_model;
-			glUniform3f(uniformLocation_colour, avatar_color[0], avatar_color[1], avatar_color[2]);
-		        avatar_model = glm::translate(avatar_model, glm::vec3(x, 0.5f, y));
-		        avatar_model = glm::scale(
-				avatar_model,
-				glm::vec3( 1.0f, 1.0f, 1.0f )
-				);
-      		        glUniformMatrix4fv( M_uni, 1, GL_FALSE, value_ptr( avatar_model ) );
-   		        glDrawArrays(GL_TRIANGLES, 0, 12*3);				
-		}
 	        if (maze_value == 1 | (walls_enabled &
 		    ( idx == 0 | idx == DIM+1 
 	            | idy == 0 | idy == DIM+1))) 
 	        {
 			mat4 wall_model;
 			glUniform3f(uniformLocation_colour, wall_color[0], wall_color[1], wall_color[2]);
+			wall_model = glm::rotate(wall_model, rot, glm::vec3(0.0f, 1.0f, 0.0f));
 		        wall_model = glm::translate(wall_model, glm::vec3(x, walls_height/2, y));
 		        wall_model = glm::scale(
 				wall_model,
@@ -359,6 +425,7 @@ void A1::draw()
 
 			glUniform3f(uniformLocation_colour, floor_color[0], floor_color[1], floor_color[2]);
 			mat4 floor_model;
+			floor_model = glm::rotate(floor_model, rot, glm::vec3(0.0f, 1.0f, 0.0f));
 		        floor_model = glm::translate(floor_model, glm::vec3(x, -0.01f, y));
 			floor_model = glm::scale(
 				floor_model,
@@ -369,6 +436,33 @@ void A1::draw()
 		}
 	    }
 	}
+
+        int idx = avatar_pos[0]; 
+	int idy = avatar_pos[1];
+        float x = 0.5f-idx+DIM/2;
+        float y = 0.5f-idy+DIM/2;
+
+	// Draw the cubes
+	// setup buffers and color
+	glBindVertexArray( m_sphere_vao );
+	glBindBuffer( GL_ARRAY_BUFFER, m_sphere_vbo );
+	glEnableVertexAttribArray( posAttrib );
+	glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+	mat4 avatar_model;
+	glUniform3f(uniformLocation_colour, avatar_color[0], avatar_color[1], avatar_color[2]);
+	avatar_model = glm::rotate(avatar_model, rot, glm::vec3(0.0f, 1.0f, 0.0f));
+        avatar_model = glm::translate(avatar_model, glm::vec3(x, 0.5f, y));
+        avatar_model = glm::scale(
+		avatar_model,
+		glm::vec3( 1.0f, 1.0f, 1.0f )
+		);
+        glUniformMatrix4fv( M_uni, 1, GL_FALSE, value_ptr( avatar_model ) );
+        glDrawArrays(GL_LINES, 0, sphere_size*3);
+
+	avatar_model = glm::rotate(avatar_model, PI/2, glm::vec3(0.0f, 1.0f, 0.0f));
+        glUniformMatrix4fv( M_uni, 1, GL_FALSE, value_ptr( avatar_model ) );
+        glDrawArrays(GL_LINES, 0, sphere_size*3);				
 
 	m_shader.disable();
 
@@ -413,6 +507,14 @@ bool A1::mouseMoveEvent(double xPos, double yPos)
 		// Probably need some instance variables to track the current
 		// rotation amount, and maybe the previous X position (so 
 		// that you can rotate relative to the *change* in X.
+		if (ImGui::IsMouseDragging(0))
+		{
+			rot += (xPos-xPos0)/500;
+			xPos0 = xPos;
+		} else if (ImGui::IsMouseClicked(0))
+		{
+			xPos0 = xPos;
+		}
 	}
 
 	return eventHandled;
@@ -441,6 +543,14 @@ bool A1::mouseScrollEvent(double xOffSet, double yOffSet) {
 	bool eventHandled(false);
 
 	// Zoom in or out.
+	zoom += (float)yOffSet;
+	zoom = std::max(zoom, -30.0f);
+	zoom = std::min(zoom, 9.5f);
+
+	proj = glm::perspective( 
+		glm::radians( 30.0f - 3*zoom ),
+		float( m_framebufferWidth ) / float( m_framebufferHeight ),
+		1.0f, 1000.0f );
 
 	return eventHandled;
 }
@@ -456,6 +566,42 @@ bool A1::windowResizeEvent(int width, int height) {
 
 	return eventHandled;
 }
+
+void A1::Reset()
+{
+	m.reset();
+	walls_enabled = false;
+	avatar_pos[0] = (int)DIM/2+1;
+	avatar_pos[1] = (int)DIM/2+1;
+	
+	floor_color[0] = 0.0f;
+	floor_color[1] = 0.0f;
+	floor_color[2] = 0.0f;
+
+	wall_color[0] = 1.0f;
+	wall_color[1] = 1.0f;
+	wall_color[2] = 0.0f;
+
+	avatar_color[0] = 0.0f;
+	avatar_color[1] = 1.0f;
+	avatar_color[2] = 0.0f;
+
+	colour[0] = 0.0f;
+	colour[1] = 0.0f;
+	colour[2] = 0.0f;
+
+	current_col = 0;
+
+	zoom = 0.0f;
+	rot = 0.0f;
+	xPos0 = 0;
+
+	proj = glm::perspective( 
+		glm::radians( 30.0f ),
+		float( m_framebufferWidth ) / float( m_framebufferHeight ),
+		1.0f, 1000.0f );	
+}
+
 
 //----------------------------------------------------------------------------------------
 /*
@@ -483,7 +629,7 @@ bool A1::keyInputEvent(int key, int action, int mods) {
 
 			eventHandled = true;
 		} else if (key == GLFW_KEY_D) {
-			cout << "D key pressed" << endl;
+			cout << "D key pressed - Maze Regenerated" << endl;
 
 			walls_enabled = true;
 			m.digMaze();
@@ -499,12 +645,9 @@ bool A1::keyInputEvent(int key, int action, int mods) {
 			eventHandled = true;
 
 		} else if (key == GLFW_KEY_R) {
-			cout << "R key pressed" << endl;
+			cout << "R key pressed - Maze Reset" << endl;
 
-			m.reset();
-			walls_enabled = false;
-			avatar_pos[0] = (int)DIM/2+1;
-			avatar_pos[1] = (int)DIM/2+1;			
+			Reset();			
 
 			eventHandled = true;
 
