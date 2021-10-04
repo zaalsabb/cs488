@@ -13,6 +13,11 @@
 const GLsizei kMaxVertices = 1000;
 
 
+struct Line {
+    glm::vec4 A;
+    glm::vec4 B;
+};
+
 // Convenience class for storing vertex data in CPU memory.
 // Data should be copied over to GPU memory via VBO storage before rendering.
 class VertexData {
@@ -60,6 +65,8 @@ protected:
 			const glm::vec2 & v1
 	);
 
+	Line CustomClip(glm::vec4 P, glm::vec4 n, Line l);
+
 	ShaderProgram m_shader;
 
 	GLuint m_vao;            // Vertex Array Object
@@ -69,5 +76,37 @@ protected:
 	VertexData m_vertexData;
 
 	glm::vec3 m_currentLineColour;
+
+	int mode = 1;
+	int rot_order = 0;
+	float fov=30;
+	float far = 20.0f;
+	float near = 1.0f;
+	float vx1 = -0.9;
+	float vy1 = -0.9;
+	float vx2 = 0.9;
+	float vy2 = 0.9;
+
+	float tx_m = 2.0f;
+	float ty_m = 1.0f;
+	float tz_m = 0.0f;
+	float alpha_m = 0.0f;
+	float beta_m = 0.0f;
+	float gamma_m = 0.0f;
+
+	float tx_v = 0.0f;
+	float ty_v = 0.0f;
+	float tz_v = -10.0f;
+	float alpha_v = 0.0f;
+	float beta_v = 0.0f;
+	float gamma_v = 0.0f;
+
+	float sx = 1.0f;
+	float sy = 1.0f;
+	float sz = 1.0f;
+
+	float xl0=0; float xm0=0; float xr0=0;
+	float xl1=0; float xm1=0; float xr1=0;
+	float dxl=0; float dxm=0; float dxr=0;
 
 };

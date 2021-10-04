@@ -9,8 +9,9 @@ using namespace std;
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/io.hpp>
+#include <math.h>
 using namespace glm;
-
+float PI = 3.1415;
 //----------------------------------------------------------------------------------------
 // Constructor
 VertexData::VertexData()
@@ -190,19 +191,268 @@ void A2::appLogic()
 	initLineData();
 
 	// Draw outer square:
-	setLineColour(vec3(1.0f, 0.7f, 0.8f));
-	drawLine(vec2(-0.5f, -0.5f), vec2(0.5f, -0.5f));
-	drawLine(vec2(0.5f, -0.5f), vec2(0.5f, 0.5f));
-	drawLine(vec2(0.5f, 0.5f), vec2(-0.5f, 0.5f));
-	drawLine(vec2(-0.5f, 0.5f), vec2(-0.5f, -0.5f));
+	//setLineColour(vec3(1.0f, 0.7f, 0.8f));
+	//drawLine(vec2(-0.75f, -0.75f), vec2(0.75f, -0.75f));
+	//drawLine(vec2(0.75f, -0.75f), vec2(0.75f, 0.75f));
+	//drawLine(vec2(0.75f, 0.75f), vec2(-0.75f, 0.75f));
+	//drawLine(vec2(-0.75f, 0.75f), vec2(-0.75f, -0.75f));
 
 
-	// Draw inner square:
-	setLineColour(vec3(0.2f, 1.0f, 1.0f));
-	drawLine(vec2(-0.25f, -0.25f), vec2(0.25f, -0.25f));
-	drawLine(vec2(0.25f, -0.25f), vec2(0.25f, 0.25f));
-	drawLine(vec2(0.25f, 0.25f), vec2(-0.25f, 0.25f));
-	drawLine(vec2(-0.25f, 0.25f), vec2(-0.25f, -0.25f));
+	//Define generic rotation matrices and a translation matrix
+    	glm::mat4 Rx = glm::mat4( 1.0 );
+    	glm::mat4 Ry = glm::mat4( 1.0 );
+    	glm::mat4 Rz = glm::mat4( 1.0 );
+	glm::mat4 rot = glm::mat4( 1.0 );
+    	glm::mat4 transl = glm::mat4( 1.0 );
+    	glm::mat4 scale = glm::mat4( 1.0 );
+
+	// define lookat transformation
+    	Rx[ 1 ] = glm::vec4(0.0f,  cos(alpha_v), sin(alpha_v), 0.0f);
+    	Rx[ 2 ] = glm::vec4(0.0f, -sin(alpha_v), cos(alpha_v), 0.0f);
+
+    	Ry[ 0 ] = glm::vec4(cos(beta_v), 0.0f, -sin(beta_v), 0.0f);
+    	Ry[ 2 ] = glm::vec4(sin(beta_v), 0.0f,  cos(beta_v), 0.0f);
+
+    	Rz[ 0 ] = glm::vec4( cos(gamma_v), sin(gamma_v), 0.0f, 0.0f);
+    	Rz[ 1 ] = glm::vec4(-sin(gamma_v), cos(gamma_v), 0.0f, 0.0f);
+
+	if (rot_order==0)
+	{
+	    	rot = Rz*Ry*Rx;
+	} else if (rot_order==1)
+	{
+	    	rot = Rx*Rz*Ry;
+	} else if (rot_order==2)
+	{
+	    	rot = Ry*Rx*Rz;
+	}
+	rot[2] = -1.0f*rot[2];
+	rot = glm::transpose(rot);
+    	transl[ 3 ] = glm::vec4(-tx_v, -ty_v, -tz_v, 1.0f);
+
+    	glm::mat4 L = rot*transl;
+
+	// define model transformation
+    	transl[ 3 ] = glm::vec4( tx_m, ty_m, tz_m, 1.0f );
+
+    	Rx[ 1 ] = glm::vec4(0.0f,  cos(alpha_m), sin(alpha_m), 0.0f);
+    	Rx[ 2 ] = glm::vec4(0.0f, -sin(alpha_m), cos(alpha_m), 0.0f);
+
+    	Ry[ 0 ] = glm::vec4(cos(beta_m), 0.0f, -sin(beta_m), 0.0f);
+    	Ry[ 2 ] = glm::vec4(sin(beta_m), 0.0f,  cos(beta_m), 0.0f);
+
+    	Rz[ 0 ] = glm::vec4(cos(gamma_m),  sin(gamma_m), 0.0f, 0.0f);
+    	Rz[ 1 ] = glm::vec4(-sin(gamma_m), cos(gamma_m), 0.0f, 0.0f);
+
+	scale[0][0] = sx*scale[0][0];
+	scale[1][1] = sy*scale[1][1];
+	scale[2][2] = sz*scale[2][2];
+
+	if (rot_order==0)
+	{
+	    	rot = Rz*Ry*Rx;
+	} else if (rot_order==1)
+	{
+	    	rot = Rx*Rz*Ry;
+	} else if (rot_order==2)
+	{
+	    	rot = Ry*Rx*Rz;
+	}
+	glm::mat4 T = transl*rot*scale; 
+
+	// define perspective transformation
+    	glm::mat4 P = glm::mat4( 1.0 );
+
+	float S = 1/tan(fov*PI/180); 
+    	P[ 0 ] = glm::vec4(S, 0.0f, 0.0f, 0.0f);
+    	P[ 1 ] = glm::vec4(0.0f, S, 0.0f, 0.0f);
+    	P[ 2 ] = glm::vec4(0.0f, 0.0f, -1.0f*(far+near)/(far-near), -1.0f);
+    	P[ 3 ] = glm::vec4(0.0f, 0.0f, -2.0f*far*near/(far-near), 0.0f);
+
+	//combine transformations
+	glm::mat4 LT = L*T;
+
+	// Draw cube	
+	std::vector<glm::vec4> vert;
+	vert.push_back(glm::vec4(1,1,1,1));
+	vert.push_back(glm::vec4(-1,1,1,1));
+	vert.push_back(glm::vec4(-1,1,1,1));
+	vert.push_back(glm::vec4(-1,-1,1,1));
+	vert.push_back(glm::vec4(-1,-1,1,1));
+	vert.push_back(glm::vec4(1,-1,1,1));
+	vert.push_back(glm::vec4(1,-1,1,1));
+	vert.push_back(glm::vec4(1,1,1,1));	
+
+	vert.push_back(glm::vec4(1,1,-1,1));
+	vert.push_back(glm::vec4(-1,1,-1,1));
+	vert.push_back(glm::vec4(-1,1,-1,1));
+	vert.push_back(glm::vec4(-1,-1,-1,1));
+	vert.push_back(glm::vec4(-1,-1,-1,1));
+	vert.push_back(glm::vec4(1,-1,-1,1));
+	vert.push_back(glm::vec4(1,-1,-1,1));
+	vert.push_back(glm::vec4(1,1,-1,1));
+
+	vert.push_back(glm::vec4(1,1,1,1));
+	vert.push_back(glm::vec4(1,1,-1,1));
+	vert.push_back(glm::vec4(-1,1,1,1));
+	vert.push_back(glm::vec4(-1,1,-1,1));
+	vert.push_back(glm::vec4(-1,-1,1,1));
+	vert.push_back(glm::vec4(-1,-1,-1,1));
+	vert.push_back(glm::vec4(1,-1,1,1));
+	vert.push_back(glm::vec4(1,-1,-1,1));
+
+	for (int i=0; i<vert.size(); i++) {
+	  vert[i] = LT*vert[i];	 
+	  vert[i] = vert[i]/vert[i].w;
+	}
+
+	setLineColour(vec3(1.0f, 1.0f, 1.0f));
+
+	for (int i=0; i<vert.size()/2; i++) {
+	  Line line;
+	  line.A = vert[i*2];
+	  line.B = vert[i*2+1];
+
+    	  //std::cout << line.A.z << ' ';
+
+	  line = CustomClip(vec4(0,0,-near,1), vec4(0,0,-1,0), line);
+	  line = CustomClip(vec4(0,0,-far,1), vec4(0,0,1,0), line);
+
+	  line.A = P*line.A;
+	  line.A = line.A/line.A.w;
+	  line.B = P*line.B;
+	  line.B = line.B/line.B.w;
+
+	  line = CustomClip(vec4(vx1,vy1,0,1), vec4(1,0,0,0), line);
+	  line = CustomClip(vec4(vx1,vy1,0,1), vec4(0,1,0,0), line);
+	  line = CustomClip(vec4(vx2,vy2,0,1), vec4(-1,0,0,0), line);
+	  line = CustomClip(vec4(vx2,vy2,0,1), vec4(0,-1,0,0), line);
+
+	  drawLine(vec2(line.A.x, line.A.y), vec2(line.B.x, line.B.y)); 
+
+	}
+
+
+	// Draw cube local axes	
+	vert[0]=glm::vec4(0,0,0,1);
+	vert[1]=glm::vec4(1,0,0,1);
+	vert[2]=glm::vec4(0,0,0,1);
+	vert[3]=glm::vec4(0,1,0,1);
+	vert[4]=glm::vec4(0,0,0,1);
+	vert[5]=glm::vec4(0,0,1,1);
+
+	for (int i=0; i<6; i++) {
+	  vert[i] = LT*vert[i];	 
+	  vert[i] = vert[i]/vert[i].w;
+	}
+
+	Line line;
+
+	
+	for (int i=0; i<3; i++) {
+	
+	  if (i == 0) {
+	    setLineColour(vec3(1.0f, 0.0f, 0.0f));
+	  } else if (i==1) {
+	    setLineColour(vec3(0.0f, 1.0f, 0.0f));
+	  } else if (i==2) {
+	    setLineColour(vec3(0.0f, 0.0f, 1.0f));
+	  }
+	  Line line;
+	  line.A = vert[i*2];
+	  line.B = vert[i*2+1];
+
+    	  //std::cout << line.A.z << ' ';
+
+	  line = CustomClip(vec4(0,0,-near,1), vec4(0,0,-1,0), line);
+	  line = CustomClip(vec4(0,0,-far,1), vec4(0,0,1,0), line);
+
+	  line.A = P*line.A;
+	  line.A = line.A/line.A.w;
+	  line.B = P*line.B;
+	  line.B = line.B/line.B.w;
+
+	  line = CustomClip(vec4(vx1,vy1,0,1), vec4(1,0,0,0), line);
+	  line = CustomClip(vec4(vx1,vy1,0,1), vec4(0,1,0,0), line);
+	  line = CustomClip(vec4(vx2,vy2,0,1), vec4(-1,0,0,0), line);
+	  line = CustomClip(vec4(vx2,vy2,0,1), vec4(0,-1,0,0), line);
+
+	  drawLine(vec2(line.A.x, line.A.y), vec2(line.B.x, line.B.y)); 
+
+	}
+
+	// Draw world local axes	
+	vert[0]=glm::vec4(0,0,0,1);
+	vert[1]=glm::vec4(1,0,0,1);
+	vert[2]=glm::vec4(0,0,0,1);
+	vert[3]=glm::vec4(0,1,0,1);
+	vert[4]=glm::vec4(0,0,0,1);
+	vert[5]=glm::vec4(0,0,1,1);
+
+	for (int i=0; i<6; i++) {
+	  vert[i] = L*vert[i];	 
+	  vert[i] = vert[i]/vert[i].w;
+	}
+
+	for (int i=0; i<3; i++) {
+	
+	  if (i == 0) {
+	    setLineColour(vec3(1.0f, 0.0f, 0.0f));
+	  } else if (i==1) {
+	    setLineColour(vec3(0.0f, 1.0f, 0.0f));
+	  } else if (i==2) {
+	    setLineColour(vec3(0.0f, 0.0f, 1.0f));
+	  }
+	  Line line;
+	  line.A = vert[i*2];
+	  line.B = vert[i*2+1];
+
+    	  //std::cout << line.A.z << ' ';
+
+	  line = CustomClip(vec4(0,0,-near,1), vec4(0,0,-1,0), line);
+	  line = CustomClip(vec4(0,0,-far,1), vec4(0,0,1,0), line);
+
+	  line.A = P*line.A;
+	  line.A = line.A/line.A.w;
+	  line.B = P*line.B;
+	  line.B = line.B/line.B.w;
+
+	  line = CustomClip(vec4(vx1,vy1,0,1), vec4(1,0,0,0), line);
+	  line = CustomClip(vec4(vx1,vy1,0,1), vec4(0,1,0,0), line);
+	  line = CustomClip(vec4(vx2,vy2,0,1), vec4(-1,0,0,0), line);
+	  line = CustomClip(vec4(vx2,vy2,0,1), vec4(0,-1,0,0), line);
+
+	  drawLine(vec2(line.A.x, line.A.y), vec2(line.B.x, line.B.y)); 
+
+    	  setLineColour(vec3(1.0f, 0.0f, 1.0f));
+	  drawLine(vec2(vx1, vy1), vec2(vx2, vy1)); 
+	  drawLine(vec2(vx2, vy1), vec2(vx2, vy2)); 
+	  drawLine(vec2(vx2, vy2), vec2(vx1, vy2)); 
+	  drawLine(vec2(vx1, vy2), vec2(vx1, vy1)); 
+
+	}
+
+}
+
+Line A2::CustomClip(glm::vec4 P, glm::vec4 n, Line l)
+{	
+	float t;
+
+	if (glm::dot(l.A-P,n) < 0 & glm::dot(l.B-P,n) < 0){
+	  l.A= glm::vec4(0,0,0,1);
+	  l.B= glm::vec4(0,0,0,1);
+	}
+
+	else if (glm::dot(l.A-P,n) > 0 & glm::dot(l.B-P,n) < 0){
+	  t = glm::dot(l.A-P,n) / glm::dot(l.A-l.B,n);
+	  l.B = l.A+(l.B-l.A)*t;
+	}
+
+	else if (glm::dot(l.A-P,n) < 0 & glm::dot(l.B-P,n) > 0){
+	  t = glm::dot(l.B-P,n) / glm::dot(l.B-l.A,n);
+	  l.A = l.B+(l.A-l.B)*t;
+	}
+	return l;
 }
 
 //----------------------------------------------------------------------------------------
@@ -315,8 +565,76 @@ bool A2::mouseMoveEvent (
 ) {
 	bool eventHandled(false);
 
-	// Fill in with event handling code...
+	if (!ImGui::IsMouseHoveringAnyWindow()) {
+		xl1=xPos;
+		xm1=xPos;
+		xr1=xPos;
+		if (ImGui::IsMouseDragging(0))
+		{
+			dxl = xl1-xl0;
+			xl0 = xl1;
+			rot_order=0;
+		} else if (ImGui::IsMouseDown(0))
+		{
+			xl0 = xl1;
+		} else {dxl = 0;}
 
+		if (ImGui::IsMouseDragging(2))
+		{
+			dxm = xm1-xm0;
+			xm0 = xm1;
+			rot_order=1;
+		} else if (ImGui::IsMouseDown(2))
+		{
+			xm0 = xm1;
+			dxm=0;
+		} else {dxm = 0;}
+
+		if (ImGui::IsMouseDragging(1))
+		{
+			dxr = xr1-xr0;
+			xr0 = xr1;
+			rot_order=2;
+		} else if (ImGui::IsMouseDown(1))
+		{
+			xr0 = xr1;
+			dxr = 0;
+		} else {dxr = 0;}
+	}
+
+	if (mode == 0){
+		alpha_v += dxl/300;
+		beta_v += dxm/300;
+		gamma_v += dxr/300;
+
+	} else if (mode == 1){
+		tx_v += dxl/100;
+		ty_v += dxm/100;
+		tz_v += dxr/100;
+
+	} else if (mode == 2) {
+		fov += dxl/100;
+		near += dxm/100;
+		far += dxr/100;
+
+	} else if (mode == 3) {
+		alpha_m += dxl/100;
+		beta_m += dxm/100;
+		gamma_m += dxr/100;
+
+	} else if (mode == 4) {
+		tx_m += dxl/100;
+		ty_m += dxm/100;
+		tz_m += dxr/100;
+
+	} else if (mode == 5) {
+		sx += dxl/100;
+		sy += dxm/100;
+		sz += dxr/100;
+
+	} else if (mode == 6) {
+
+	}
 	return eventHandled;
 }
 
@@ -360,8 +678,6 @@ bool A2::windowResizeEvent (
 		int height
 ) {
 	bool eventHandled(false);
-
-	// Fill in with event handling code...
 
 	return eventHandled;
 }
