@@ -65,6 +65,8 @@ protected:
 			const glm::vec2 & v1
 	);
 
+	void Reset();
+
 	Line CustomClip(glm::vec4 P, glm::vec4 n, Line l);
 
 	ShaderProgram m_shader;
@@ -77,18 +79,21 @@ protected:
 
 	glm::vec3 m_currentLineColour;
 
-	int mode = 1;
-	int rot_order = 0;
+	int win_w;
+	int win_h;
+	
+	int mode = 0;
+	int rot_order_m = 0;
+	int rot_order_v = 0;
 	float fov=30;
-	float far = 20.0f;
+	float far = 50.0f;
 	float near = 1.0f;
-	float vx1 = -0.9;
-	float vy1 = -0.9;
-	float vx2 = 0.9;
-	float vy2 = 0.9;
+	glm::vec4 v1 = glm::vec4(-0.9,-0.9,0,1);
+	glm::vec4 v2 = glm::vec4(0.9,0.9,0,1);
+	glm::mat4 rot_m;
 
-	float tx_m = 2.0f;
-	float ty_m = 1.0f;
+	float tx_m = 0.0f;
+	float ty_m = 0.0f;
 	float tz_m = 0.0f;
 	float alpha_m = 0.0f;
 	float beta_m = 0.0f;
@@ -96,7 +101,7 @@ protected:
 
 	float tx_v = 0.0f;
 	float ty_v = 0.0f;
-	float tz_v = -10.0f;
+	float tz_v = -15.0f;
 	float alpha_v = 0.0f;
 	float beta_v = 0.0f;
 	float gamma_v = 0.0f;

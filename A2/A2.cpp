@@ -216,13 +216,13 @@ void A2::appLogic()
     	Rz[ 0 ] = glm::vec4( cos(gamma_v), sin(gamma_v), 0.0f, 0.0f);
     	Rz[ 1 ] = glm::vec4(-sin(gamma_v), cos(gamma_v), 0.0f, 0.0f);
 
-	if (rot_order==0)
+	if (rot_order_v==0)
 	{
 	    	rot = Rz*Ry*Rx;
-	} else if (rot_order==1)
+	} else if (rot_order_v==1)
 	{
 	    	rot = Rx*Rz*Ry;
-	} else if (rot_order==2)
+	} else if (rot_order_v==2)
 	{
 	    	rot = Ry*Rx*Rz;
 	}
@@ -248,28 +248,32 @@ void A2::appLogic()
 	scale[1][1] = sy*scale[1][1];
 	scale[2][2] = sz*scale[2][2];
 
-	if (rot_order==0)
+	if (rot_order_m==0)
 	{
 	    	rot = Rz*Ry*Rx;
-	} else if (rot_order==1)
+	} else if (rot_order_m==1)
 	{
 	    	rot = Rx*Rz*Ry;
-	} else if (rot_order==2)
+	} else if (rot_order_m==2)
 	{
 	    	rot = Ry*Rx*Rz;
 	}
-	glm::mat4 T = transl*rot*scale; 
 
-	// define perspective transformation
+	rot_m = rot;
+	//transl[3]=rot*transl[3];
+
+	glm::mat4 T = transl*rot; 
+
     	glm::mat4 P = glm::mat4( 1.0 );
 
-	float S = 1/tan(fov*PI/180); 
+	float S = 1/tan(fov/2*PI/180); 
     	P[ 0 ] = glm::vec4(S, 0.0f, 0.0f, 0.0f);
     	P[ 1 ] = glm::vec4(0.0f, S, 0.0f, 0.0f);
     	P[ 2 ] = glm::vec4(0.0f, 0.0f, -1.0f*(far+near)/(far-near), -1.0f);
-    	P[ 3 ] = glm::vec4(0.0f, 0.0f, -2.0f*far*near/(far-near), 0.0f);
+    	P[ 3 ] = glm::vec4(0.0f, 0.0f, -2.0f*far*near/(far-near),    0.0f);
 
 	//combine transformations
+	glm::mat4 LTS = L*T*scale;
 	glm::mat4 LT = L*T;
 
 	// Draw cube	
@@ -302,7 +306,7 @@ void A2::appLogic()
 	vert.push_back(glm::vec4(1,-1,-1,1));
 
 	for (int i=0; i<vert.size(); i++) {
-	  vert[i] = LT*vert[i];	 
+	  vert[i] = LTS*vert[i];	 
 	  vert[i] = vert[i]/vert[i].w;
 	}
 
@@ -323,15 +327,17 @@ void A2::appLogic()
 	  line.B = P*line.B;
 	  line.B = line.B/line.B.w;
 
-	  line = CustomClip(vec4(vx1,vy1,0,1), vec4(1,0,0,0), line);
-	  line = CustomClip(vec4(vx1,vy1,0,1), vec4(0,1,0,0), line);
-	  line = CustomClip(vec4(vx2,vy2,0,1), vec4(-1,0,0,0), line);
-	  line = CustomClip(vec4(vx2,vy2,0,1), vec4(0,-1,0,0), line);
+	  line = CustomClip(vec4(-1,-1,0,1), vec4(1,0,0,0), line);
+	  line = CustomClip(vec4(-1,-1,0,1), vec4(0,1,0,0), line);
+	  line = CustomClip(vec4( 1, 1,0,1), vec4(-1,0,0,0), line);
+	  line = CustomClip(vec4( 1, 1,0,1), vec4(0,-1,0,0), line);
+
+	  line.A = line.A*(v2-v1)/2.0f+(v1+v2)/2.0f;
+	  line.B = line.B*(v2-v1)/2.0f+(v1+v2)/2.0f;
 
 	  drawLine(vec2(line.A.x, line.A.y), vec2(line.B.x, line.B.y)); 
 
 	}
-
 
 	// Draw cube local axes	
 	vert[0]=glm::vec4(0,0,0,1);
@@ -372,16 +378,19 @@ void A2::appLogic()
 	  line.B = P*line.B;
 	  line.B = line.B/line.B.w;
 
-	  line = CustomClip(vec4(vx1,vy1,0,1), vec4(1,0,0,0), line);
-	  line = CustomClip(vec4(vx1,vy1,0,1), vec4(0,1,0,0), line);
-	  line = CustomClip(vec4(vx2,vy2,0,1), vec4(-1,0,0,0), line);
-	  line = CustomClip(vec4(vx2,vy2,0,1), vec4(0,-1,0,0), line);
+	  line = CustomClip(vec4(-1,-1,0,1), vec4(1,0,0,0), line);
+	  line = CustomClip(vec4(-1,-1,0,1), vec4(0,1,0,0), line);
+	  line = CustomClip(vec4( 1, 1,0,1), vec4(-1,0,0,0), line);
+	  line = CustomClip(vec4( 1, 1,0,1), vec4(0,-1,0,0), line);
+
+	  line.A = line.A*(v2-v1)/2.0f+(v1+v2)/2.0f;
+	  line.B = line.B*(v2-v1)/2.0f+(v1+v2)/2.0f;
 
 	  drawLine(vec2(line.A.x, line.A.y), vec2(line.B.x, line.B.y)); 
 
 	}
 
-	// Draw world local axes	
+	// Draw world axes	
 	vert[0]=glm::vec4(0,0,0,1);
 	vert[1]=glm::vec4(1,0,0,1);
 	vert[2]=glm::vec4(0,0,0,1);
@@ -397,11 +406,11 @@ void A2::appLogic()
 	for (int i=0; i<3; i++) {
 	
 	  if (i == 0) {
-	    setLineColour(vec3(1.0f, 0.0f, 0.0f));
+	    setLineColour(vec3(1.0f, 1.0f, 0.0f));
 	  } else if (i==1) {
-	    setLineColour(vec3(0.0f, 1.0f, 0.0f));
+	    setLineColour(vec3(1.0f, 0.0f, 1.0f));
 	  } else if (i==2) {
-	    setLineColour(vec3(0.0f, 0.0f, 1.0f));
+	    setLineColour(vec3(0.0f, 1.0f, 1.0f));
 	  }
 	  Line line;
 	  line.A = vert[i*2];
@@ -410,28 +419,29 @@ void A2::appLogic()
     	  //std::cout << line.A.z << ' ';
 
 	  line = CustomClip(vec4(0,0,-near,1), vec4(0,0,-1,0), line);
-	  line = CustomClip(vec4(0,0,-far,1), vec4(0,0,1,0), line);
+	  line = CustomClip(vec4(0,0,-far, 1), vec4(0,0, 1,0), line);
 
 	  line.A = P*line.A;
 	  line.A = line.A/line.A.w;
 	  line.B = P*line.B;
 	  line.B = line.B/line.B.w;
 
-	  line = CustomClip(vec4(vx1,vy1,0,1), vec4(1,0,0,0), line);
-	  line = CustomClip(vec4(vx1,vy1,0,1), vec4(0,1,0,0), line);
-	  line = CustomClip(vec4(vx2,vy2,0,1), vec4(-1,0,0,0), line);
-	  line = CustomClip(vec4(vx2,vy2,0,1), vec4(0,-1,0,0), line);
+	  line = CustomClip(vec4(-1,-1,0,1), vec4(1,0,0,0), line);
+	  line = CustomClip(vec4(-1,-1,0,1), vec4(0,1,0,0), line);
+	  line = CustomClip(vec4( 1, 1,0,1), vec4(-1,0,0,0), line);
+	  line = CustomClip(vec4( 1, 1,0,1), vec4(0,-1,0,0), line);
+
+	  line.A = line.A*(v2-v1)/2.0f+(v1+v2)/2.0f;
+	  line.B = line.B*(v2-v1)/2.0f+(v1+v2)/2.0f;
 
 	  drawLine(vec2(line.A.x, line.A.y), vec2(line.B.x, line.B.y)); 
-
-    	  setLineColour(vec3(1.0f, 0.0f, 1.0f));
-	  drawLine(vec2(vx1, vy1), vec2(vx2, vy1)); 
-	  drawLine(vec2(vx2, vy1), vec2(vx2, vy2)); 
-	  drawLine(vec2(vx2, vy2), vec2(vx1, vy2)); 
-	  drawLine(vec2(vx1, vy2), vec2(vx1, vy1)); 
-
 	}
 
+	setLineColour(vec3(1.0f, 0.0f, 1.0f));
+	drawLine(vec2(v1.x, v1.y), vec2(v2.x, v1.y)); 
+	drawLine(vec2(v2.x, v1.y), vec2(v2.x, v2.y)); 
+	drawLine(vec2(v2.x, v2.y), vec2(v1.x, v2.y)); 
+	drawLine(vec2(v1.x, v2.y), vec2(v1.x, v1.y)); 
 }
 
 Line A2::CustomClip(glm::vec4 P, glm::vec4 n, Line l)
@@ -475,15 +485,26 @@ void A2::guiLogic()
 			windowFlags);
 
 
-		// Add more gui elements here here ...
-
-
+		if( ImGui::RadioButton( "Rotate View      (O)", &mode, 0 ) ) {}
+		if( ImGui::RadioButton( "Translate View   (E)", &mode, 1 ) ) {}
+		if( ImGui::RadioButton( "Perspective      (P)", &mode, 2 ) ) {}
+		if( ImGui::RadioButton( "Rotate Model     (R)", &mode, 3 ) ) {}
+		if( ImGui::RadioButton( "Translate Model  (T)", &mode, 4 ) ) {}
+		if( ImGui::RadioButton( "Scale Model      (S)", &mode, 5 ) ) {}
+		if( ImGui::RadioButton( "Viewport         (V)", &mode, 6 ) ) {}
+				      
 		// Create Button, and check if it was clicked:
-		if( ImGui::Button( "Quit Application" ) ) {
+		if( ImGui::Button( "Reset              (A)" ) ) {
+			Reset();
+		}
+		if( ImGui::Button( "Quit Application   (Q)" ) ) {
 			glfwSetWindowShouldClose(m_window, GL_TRUE);
 		}
 
+
 		ImGui::Text( "Framerate: %.1f FPS", ImGui::GetIO().Framerate );
+		ImGui::Text( "Near: %.1f, Far: %.1f", near, far );
+		ImGui::Text( "fov: %.1f deg", fov );
 
 	ImGui::End();
 }
@@ -541,6 +562,37 @@ void A2::cleanup()
 
 }
 
+void A2::Reset(){
+
+	mode=0;
+	rot_order_m = 0;
+	rot_order_v = 0;
+	fov=30;
+	far = 50.0f;
+	near = 1.0f;
+	v1 = glm::vec4(-0.9,-0.9,0,1);
+	v2 = glm::vec4(0.9,0.9,0,1);
+
+	tx_m = 0.0f;
+	ty_m = 0.0f;
+	tz_m = 0.0f;
+	alpha_m = 0.0f;
+	beta_m = 0.0f;
+	gamma_m = 0.0f;
+
+	tx_v = 0.0f;
+	ty_v = 0.0f;
+	tz_v = -15.0f;
+	alpha_v = 0.0f;
+	beta_v = 0.0f;
+	gamma_v = 0.0f;
+
+	sx = 1.0f;
+	sy = 1.0f;
+	sz = 1.0f;
+
+}
+
 //----------------------------------------------------------------------------------------
 /*
  * Event handler.  Handles cursor entering the window area events.
@@ -573,7 +625,8 @@ bool A2::mouseMoveEvent (
 		{
 			dxl = xl1-xl0;
 			xl0 = xl1;
-			rot_order=0;
+			if (mode == 0) {rot_order_v=0;}			
+			if (mode == 3) {rot_order_m=0;}			
 		} else if (ImGui::IsMouseDown(0))
 		{
 			xl0 = xl1;
@@ -583,7 +636,8 @@ bool A2::mouseMoveEvent (
 		{
 			dxm = xm1-xm0;
 			xm0 = xm1;
-			rot_order=1;
+			if (mode == 0) {rot_order_v=1;}			
+			if (mode == 3) {rot_order_m=1;}
 		} else if (ImGui::IsMouseDown(2))
 		{
 			xm0 = xm1;
@@ -594,7 +648,8 @@ bool A2::mouseMoveEvent (
 		{
 			dxr = xr1-xr0;
 			xr0 = xr1;
-			rot_order=2;
+			if (mode == 0) {rot_order_v=2;}			
+			if (mode == 3) {rot_order_m=2;}
 		} else if (ImGui::IsMouseDown(1))
 		{
 			xr0 = xr1;
@@ -603,19 +658,24 @@ bool A2::mouseMoveEvent (
 	}
 
 	if (mode == 0){
-		alpha_v += dxl/300;
-		beta_v += dxm/300;
-		gamma_v += dxr/300;
+		alpha_v += dxl/1500;
+		beta_v += dxm/1500;
+		gamma_v += dxr/500;
 
 	} else if (mode == 1){
-		tx_v += dxl/100;
-		ty_v += dxm/100;
-		tz_v += dxr/100;
+		tx_v += dxl/200;
+		ty_v += dxm/200;
+		tz_v += dxr/200;
 
 	} else if (mode == 2) {
-		fov += dxl/100;
+		fov += dxl/20;
 		near += dxm/100;
 		far += dxr/100;
+		if (near <= 0){near=0.01f;}
+		if (far  <= 0){far =0.02f;}
+
+		if (fov  < 5){fov =5;}
+		if (fov  > 160){fov =160;}
 
 	} else if (mode == 3) {
 		alpha_m += dxl/100;
@@ -623,9 +683,11 @@ bool A2::mouseMoveEvent (
 		gamma_m += dxr/100;
 
 	} else if (mode == 4) {
-		tx_m += dxl/100;
-		ty_m += dxm/100;
-		tz_m += dxr/100;
+		vec4 d = vec4(dxl/200,dxm/200,dxr/200,1);
+		d = rot_m*d;
+		tx_m += d.x;
+		ty_m += d.y;
+		tz_m += d.z;
 
 	} else if (mode == 5) {
 		sx += dxl/100;
@@ -634,6 +696,24 @@ bool A2::mouseMoveEvent (
 
 	} else if (mode == 6) {
 
+		if (!ImGui::IsMouseHoveringAnyWindow()) {
+			if (ImGui::IsMouseDragging(0))
+			{
+				v2 = vec4(xPos/win_w*2-1,1-yPos/win_h*2,0,1);
+				if (v2.x < -1){v2.x=-1;}
+				if (v2.y < -1){v2.y=-1;}
+				if (v2.x >  1){v2.x=1;}
+				if (v2.y >  1){v2.y=1;}
+			} else if (ImGui::IsMouseDown(0))
+			{
+				v1 = vec4(xPos/win_w*2-1,1-yPos/win_h*2,0,1);
+				if (v1.x < -1){v1.x=-1;}
+				if (v1.y < -1){v1.y=-1;}
+				if (v1.x >  1){v1.x=1;}
+				if (v1.y >  1){v1.y=1;}
+
+			}
+		}
 	}
 	return eventHandled;
 }
@@ -679,6 +759,9 @@ bool A2::windowResizeEvent (
 ) {
 	bool eventHandled(false);
 
+	win_w = width;
+	win_h = height;
+
 	return eventHandled;
 }
 
@@ -693,7 +776,43 @@ bool A2::keyInputEvent (
 ) {
 	bool eventHandled(false);
 
-	// Fill in with event handling code...
+	if (key == GLFW_KEY_O) {
+		cout << "O key pressed" << endl;
+		mode = 0;
+		eventHandled = true;
+	} else if (key == GLFW_KEY_E) {
+		cout << "E key pressed" << endl;
+		mode=1;
+		eventHandled = true;
+	} else if (key == GLFW_KEY_P) {
+		cout << "P key pressed" << endl;
+		mode=2;
+		eventHandled = true;
+	} else if (key == GLFW_KEY_R) {
+		cout << "R key pressed" << endl;
+		mode=3;
+		eventHandled = true;
+	} else if (key == GLFW_KEY_T) {
+		cout << "T key pressed" << endl;
+		mode=4;
+		eventHandled = true;
+	} else if (key == GLFW_KEY_S) {
+		cout << "S key pressed" << endl;
+		mode=5;
+		eventHandled = true;
+	} else if (key == GLFW_KEY_V) {
+		cout << "V key pressed" << endl;
+		mode=6;
+		eventHandled = true;
+	} else if (key == GLFW_KEY_A) {
+		cout << "A key pressed" << endl;
+		Reset();
+		eventHandled = true;
+	} else if (key == GLFW_KEY_Q) {
+		cout << "Q key pressed" << endl;
+		glfwSetWindowShouldClose(m_window, GL_TRUE);
+		eventHandled = true;
+	}
 
 	return eventHandled;
 }
