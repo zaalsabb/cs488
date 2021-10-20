@@ -8,6 +8,8 @@ using namespace std;
 
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/io.hpp>
 
 using namespace glm;
 
@@ -52,7 +54,11 @@ void SceneNode::set_transform(const glm::mat4& m) {
 	trans = m;
 	invtrans = m;
 }
-
+//---------------------------------------------------------------------------------------
+void SceneNode::reset_transform() {
+	trans = trans_orig;
+	invtrans = trans_orig;
+}
 //---------------------------------------------------------------------------------------
 const glm::mat4& SceneNode::get_transform() const {
 	return trans;
@@ -92,18 +98,50 @@ void SceneNode::rotate(char axis, float angle) {
 	}
 	mat4 rot_matrix = glm::rotate(degreesToRadians(angle), rot_axis);
 	trans = rot_matrix * trans;
+	trans_unscaled = rot_matrix * trans_unscaled;
+	trans_orig = trans;
 }
 
 //---------------------------------------------------------------------------------------
 void SceneNode::scale(const glm::vec3 & amount) {
-	trans = glm::scale(amount) * trans;
+	//trans = glm::scale(amount) * trans;
+	//trans_orig = trans;
+	s = amount;
 }
 
 //---------------------------------------------------------------------------------------
 void SceneNode::translate(const glm::vec3& amount) {
 	trans = glm::translate(amount) * trans;
+	trans_unscaled = glm::translate(amount) * trans_unscaled;
+	trans_orig = trans;
 }
 
+//---------------------------------------------------------------------------------------
+void SceneNode::BuildHierarchyGraph(){
+
+	for (SceneNode * node : children) {
+		node->set_transform(trans*node->trans);
+		node->BuildHierarchyGraph();
+	}
+}
+
+//---------------------------------------------------------------------------------------
+void SceneNode::ApplyScales(){
+
+	for (SceneNode * node : children) {
+		node->set_transform(node->trans*glm::scale(node->s));
+		node->ApplyScales();
+	}
+}
+
+//---------------------------------------------------------------------------------------
+void SceneNode::ResetChildrenTransforms(){
+
+	for (SceneNode * node : children) {
+		node->reset_transform();
+		node->ResetChildrenTransforms();
+	}
+}
 
 //---------------------------------------------------------------------------------------
 int SceneNode::totalSceneNodes() const {

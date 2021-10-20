@@ -28,7 +28,9 @@ public:
     const glm::mat4& get_inverse() const;
     
     void set_transform(const glm::mat4& m);
-    
+    void reset_transform();
+    void ResetChildrenTransforms();
+
     void add_child(SceneNode* child);
     
     void remove_child(SceneNode* child);
@@ -38,6 +40,8 @@ public:
     void scale(const glm::vec3& amount);
     void translate(const glm::vec3& amount);
 
+    void BuildHierarchyGraph();
+    void ApplyScales();
 
 	friend std::ostream & operator << (std::ostream & os, const SceneNode & node);
 
@@ -45,6 +49,9 @@ public:
     
     // Transformations
     glm::mat4 trans;
+    glm::mat4 trans_orig;
+    glm::mat4 trans_unscaled;
+    glm::vec3 s = glm::vec3(1.0,1.0,1.0);
     glm::mat4 invtrans;
     
     std::list<SceneNode*> children;

@@ -48,7 +48,7 @@ A3::~A3()
 void A3::init()
 {
 	// Set the background colour.
-	glClearColor(0.85, 0.85, 0.85, 1.0);
+	glClearColor(0.5, 0.5, 0.5, 1.0);
 
 	createShaderProgram();
 
@@ -81,7 +81,7 @@ void A3::init()
 
 	initViewMatrix();
 
-	initLightSources();
+	initLightSources();	
 
 
 	// Exiting the current scope calls delete automatically on meshConsolidator freeing
@@ -104,6 +104,7 @@ void A3::processLuaSceneFile(const std::string & filename) {
 	if (!m_rootNode) {
 		std::cerr << "Could Not Open " << filename << std::endl;
 	}
+
 }
 
 //----------------------------------------------------------------------------------------
@@ -258,7 +259,7 @@ void A3::initViewMatrix() {
 void A3::initLightSources() {
 	// World-space position
 	m_light.position = vec3(10.0f, 10.0f, 10.0f);
-	m_light.rgbIntensity = vec3(0.0f); // light
+	m_light.rgbIntensity = vec3(0.8f); // light
 }
 
 //----------------------------------------------------------------------------------------
@@ -283,7 +284,7 @@ void A3::uploadCommonSceneUniforms() {
 		//-- Set background light ambient intensity
 		{
 			location = m_shader.getUniformLocation("ambientIntensity");
-			vec3 ambientIntensity(0.25f);
+			vec3 ambientIntensity(0.0f);
 			glUniform3fv(location, 1, value_ptr(ambientIntensity));
 			CHECK_GL_ERRORS;
 		}
@@ -378,32 +379,28 @@ static void updateShaderUniforms(
  */
 void A3::draw() {
 
+
+	// recursively build hierarchical graph transformations
+	m_rootNode->BuildHierarchyGraph();
+
+	m_rootNode->ApplyScales();
+
 	glEnable( GL_DEPTH_TEST );
 	renderSceneGraph(*m_rootNode);
 
 
 	glDisable( GL_DEPTH_TEST );
 	renderArcCircle();
+
+	m_rootNode->ResetChildrenTransforms();
 }
+
 
 //----------------------------------------------------------------------------------------
 void A3::renderSceneGraph(const SceneNode & root) {
 
 	// Bind the VAO once here, and reuse for all GeometryNode rendering below.
 	glBindVertexArray(m_vao_meshData);
-
-	// This is emphatically *not* how you should be drawing the scene graph in
-	// your final implementation.  This is a non-hierarchical demonstration
-	// in which we assume that there is a list of GeometryNodes living directly
-	// underneath the root node, and that we can draw them in a loop.  It's
-	// just enough to demonstrate how to get geometry and materials out of
-	// a GeometryNode and onto the screen.
-
-	// You'll want to turn this into recursive code that walks over the tree.
-	// You can do that by putting a method in SceneNode, overridden in its
-	// subclasses, that renders the subtree rooted at every node.  Or you
-	// could put a set of mutually recursive functions in this class, which
-	// walk down the tree from nodes of different types.
 
 	for (const SceneNode * node : root.children) {
 
@@ -422,10 +419,37 @@ void A3::renderSceneGraph(const SceneNode & root) {
 		m_shader.enable();
 		glDrawArrays(GL_TRIANGLES, batchInfo.startIndex, batchInfo.numIndices);
 		m_shader.disable();
+
+		renderSceneGraphChildren(node);
 	}
 
 	glBindVertexArray(0);
 	CHECK_GL_ERRORS;
+}
+
+void A3::renderSceneGraphChildren(const SceneNode * root) {
+
+
+	for (const SceneNode * node : root->children) {
+
+		if (node->m_nodeType != NodeType::GeometryNode)
+			continue;
+
+		const GeometryNode * geometryNode = static_cast<const GeometryNode *>(node);
+
+		updateShaderUniforms(m_shader, *geometryNode, m_view);
+
+
+		// Get the BatchInfo corresponding to the GeometryNode's unique MeshId.
+		BatchInfo batchInfo = m_batchInfoMap[geometryNode->meshId];
+
+		//-- Now render the mesh:
+		m_shader.enable();
+		glDrawArrays(GL_TRIANGLES, batchInfo.startIndex, batchInfo.numIndices);
+		m_shader.disable();
+
+		renderSceneGraphChildren(node);
+	}
 }
 
 //----------------------------------------------------------------------------------------
