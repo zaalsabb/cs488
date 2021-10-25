@@ -18,7 +18,7 @@ using namespace glm;
 static bool show_gui = true;
 
 const size_t CIRCLE_PTS = 48;
-
+bool do_picking = false;
 //----------------------------------------------------------------------------------------
 // Constructor
 A3::A3(const std::string & luaSceneFile)
@@ -260,6 +260,7 @@ void A3::initLightSources() {
 	// World-space position
 	m_light.position = vec3(10.0f, 10.0f, 10.0f);
 	m_light.rgbIntensity = vec3(0.8f); // light
+	//m_light.rgbIntensity = vec3(0.0f); // light
 }
 
 //----------------------------------------------------------------------------------------
@@ -272,19 +273,28 @@ void A3::uploadCommonSceneUniforms() {
 		CHECK_GL_ERRORS;
 
 
-		//-- Set LightSource uniform for the scene:
-		{
+		if( !do_picking ) {
+			m_light.rgbIntensity = vec3(0.8f); // light
 			location = m_shader.getUniformLocation("light.position");
 			glUniform3fv(location, 1, value_ptr(m_light.position));
 			location = m_shader.getUniformLocation("light.rgbIntensity");
 			glUniform3fv(location, 1, value_ptr(m_light.rgbIntensity));
 			CHECK_GL_ERRORS;
-		}
 
-		//-- Set background light ambient intensity
-		{
 			location = m_shader.getUniformLocation("ambientIntensity");
-			vec3 ambientIntensity(0.0f);
+			vec3 ambientIntensity(0.05f);
+			glUniform3fv(location, 1, value_ptr(ambientIntensity));
+			CHECK_GL_ERRORS;
+		} else {
+			m_light.rgbIntensity = vec3(0.0f); // light
+			location = m_shader.getUniformLocation("light.position");
+			glUniform3fv(location, 1, value_ptr(m_light.position));
+			location = m_shader.getUniformLocation("light.rgbIntensity");
+			glUniform3fv(location, 1, value_ptr(m_light.rgbIntensity));
+			CHECK_GL_ERRORS;
+
+			location = m_shader.getUniformLocation("ambientIntensity");
+			vec3 ambientIntensity(1.0f);
 			glUniform3fv(location, 1, value_ptr(ambientIntensity));
 			CHECK_GL_ERRORS;
 		}
@@ -356,19 +366,30 @@ static void updateShaderUniforms(
 		glUniformMatrix4fv(location, 1, GL_FALSE, value_ptr(modelView));
 		CHECK_GL_ERRORS;
 
-		//-- Set NormMatrix:
-		location = shader.getUniformLocation("NormalMatrix");
-		mat3 normalMatrix = glm::transpose(glm::inverse(mat3(modelView)));
-		glUniformMatrix3fv(location, 1, GL_FALSE, value_ptr(normalMatrix));
-		CHECK_GL_ERRORS;
+		if( do_picking ) {
+			float r = float(node.m_nodeId&0xff) / 255.0f;
+			float g = float((node.m_nodeId>>8)&0xff) / 255.0f;
+			float b = float((node.m_nodeId>>16)&0xff) / 255.0f;
 
+			location = shader.getUniformLocation("material.kd");
+			glUniform3f( location, r, g, b );
+			CHECK_GL_ERRORS;
+		} else {
+			//-- Set NormMatrix:
+			location = shader.getUniformLocation("NormalMatrix");
+			mat3 normalMatrix = glm::transpose(glm::inverse(mat3(modelView)));
+			glUniformMatrix3fv(location, 1, GL_FALSE, value_ptr(normalMatrix));
+			CHECK_GL_ERRORS;
 
-		//-- Set Material values:
-		location = shader.getUniformLocation("material.kd");
-		vec3 kd = node.material.kd;
-		glUniform3fv(location, 1, value_ptr(kd));
+			//-- Set Material values:
+			location = shader.getUniformLocation("material.kd");
+			vec3 kd = node.material.kd;
+			glUniform3fv(location, 1, value_ptr(kd));
+			CHECK_GL_ERRORS;
+		}
 		CHECK_GL_ERRORS;
 	}
+
 	shader.disable();
 
 }
@@ -398,6 +419,7 @@ void A3::draw() {
 
 //----------------------------------------------------------------------------------------
 void A3::renderSceneGraph(const SceneNode & root) {
+
 
 	// Bind the VAO once here, and reuse for all GeometryNode rendering below.
 	glBindVertexArray(m_vao_meshData);
@@ -448,9 +470,14 @@ void A3::renderSceneGraphChildren(const SceneNode * root) {
 		glDrawArrays(GL_TRIANGLES, batchInfo.startIndex, batchInfo.numIndices);
 		m_shader.disable();
 
+		//vec3 kd = geometryNode->material.kd;
+		//cout << value_ptr(kd) << endl;
+
 		renderSceneGraphChildren(node);
 	}
 }
+
+//void RenderFalseColors(){}
 
 //----------------------------------------------------------------------------------------
 // Draw the trackball circle.
@@ -507,8 +534,6 @@ bool A3::mouseMoveEvent (
 ) {
 	bool eventHandled(false);
 
-	// Fill in with event handling code...
-
 	return eventHandled;
 }
 
@@ -523,7 +548,32 @@ bool A3::mouseButtonInputEvent (
 ) {
 	bool eventHandled(false);
 
-	// Fill in with event handling code...
+	if (ImGui::IsMouseDown(0)) {
+		double xPos, yPos;
+		glfwGetCursorPos( m_window, &xPos, &yPos );
+
+		do_picking = true;
+
+		uploadCommonSceneUniforms();
+		glClearColor(1.0, 1.0, 1.0, 1.0 );
+		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+		glClearColor(0.5, 0.5, 0.5, 1.0);
+
+		draw();
+
+		xPos *= double(m_framebufferWidth) / double(m_windowWidth);
+		yPos = m_windowHeight - yPos;
+		yPos *= double(m_framebufferHeight) / double(m_windowHeight);
+
+		GLubyte buffer[4] = { 0, 0, 0, 0 };
+		glReadPixels( int(xPos), int(yPos), 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, buffer );
+
+		idx = buffer[0] + (buffer[1] << 8) + (buffer[2] << 16);
+
+		cout << idx << endl;
+
+		do_picking = false;
+	}
 
 	return eventHandled;
 }
@@ -571,6 +621,7 @@ bool A3::keyInputEvent (
 		if( key == GLFW_KEY_M ) {
 			show_gui = !show_gui;
 			eventHandled = true;
+
 		}
 	}
 	// Fill in with event handling code...
