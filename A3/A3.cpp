@@ -533,7 +533,45 @@ bool A3::mouseMoveEvent (
 		double yPos
 ) {
 	bool eventHandled(false);
-
+	if (!ImGui::IsMouseHoveringAnyWindow()) {
+		x1=xPos;
+		y1=yPos;
+		if (xPos==-1){
+			x0=x1;
+			y0=y1;
+		}
+		if (ImGui::IsMouseDown(0))
+		{
+			dx = x1-x0;
+			dy = -(y1-y0);
+			x0 = x1;
+			y0 = y1;
+			m_rootNode->mouse_trans.x = dx/100;
+			m_rootNode->mouse_trans.y = dy/100;
+			m_rootNode->mouse_trans.z = 0;
+			m_rootNode->ApplyMouseTranslation();
+		} else if (ImGui::IsMouseDown(1))
+		{
+			dy = -(y1-y0);
+			y0 = y1;
+			m_rootNode->mouse_trans.x = 0;
+			m_rootNode->mouse_trans.y = 0;
+			m_rootNode->mouse_trans.z = dy/100;
+			m_rootNode->ApplyMouseTranslation();
+		} else if (ImGui::IsMouseDown(2))
+		{
+			dx = x1-x0;
+			dy = -(y1-y0);
+			x0 = x1;
+			y0 = y1;
+			m_rootNode->mouse_rot.x = dx/10;
+			m_rootNode->mouse_rot.y = dy/10;
+			m_rootNode->ApplyMouseRotation();
+		} else {
+			x0 = x1;
+			y0 = y1;
+		}
+	}
 	return eventHandled;
 }
 

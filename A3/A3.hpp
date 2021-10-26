@@ -51,7 +51,7 @@ protected:
 	void renderSceneGraphChildren(const SceneNode *node);
 	void renderArcCircle();
 
-	SceneNode PickedNode;
+	//SceneNode PickedNode;
 	int idx;
 
 	glm::mat4 m_perpsective;
@@ -84,5 +84,11 @@ protected:
 
 	std::shared_ptr<SceneNode> m_rootNode;
 
+	float x0=-1;
+	float x1;
+	float dx;
 
+	float y0=-1;
+	float y1;
+	float dy;
 };

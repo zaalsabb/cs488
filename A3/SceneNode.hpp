@@ -42,6 +42,8 @@ public:
 
     void BuildHierarchyGraph();
     void ApplyScales();
+    void ApplyMouseTranslation();
+    void ApplyMouseRotation();
 
 	friend std::ostream & operator << (std::ostream & os, const SceneNode & node);
 
@@ -53,7 +55,10 @@ public:
     glm::mat4 trans_unscaled;
     glm::vec3 s = glm::vec3(1.0,1.0,1.0);
     glm::mat4 invtrans;
-    
+    glm::vec3 total_trans;
+    glm::vec3 mouse_trans;
+    glm::vec3 mouse_rot;
+
     std::list<SceneNode*> children;
 
 	NodeType m_nodeType;

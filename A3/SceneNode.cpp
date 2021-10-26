@@ -114,6 +114,7 @@ void SceneNode::translate(const glm::vec3& amount) {
 	trans = glm::translate(amount) * trans;
 	trans_unscaled = glm::translate(amount) * trans_unscaled;
 	trans_orig = trans;
+	total_trans = amount;
 }
 
 //---------------------------------------------------------------------------------------
@@ -141,6 +142,21 @@ void SceneNode::ResetChildrenTransforms(){
 		node->reset_transform();
 		node->ResetChildrenTransforms();
 	}
+}
+//---------------------------------------------------------------------------------------
+void SceneNode::ApplyMouseTranslation(){
+
+	translate(mouse_trans);
+}
+//---------------------------------------------------------------------------------------
+void SceneNode::ApplyMouseRotation(){
+
+	translate(-total_trans);
+	rotate('x', mouse_rot.x);
+	rotate('y', mouse_rot.y);
+	rotate('z', mouse_rot.z);
+	translate(total_trans);
+
 }
 
 //---------------------------------------------------------------------------------------
