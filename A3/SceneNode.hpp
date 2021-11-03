@@ -39,11 +39,13 @@ public:
     void rotate(char axis, float angle);
     void scale(const glm::vec3& amount);
     void translate(const glm::vec3& amount);
+    void rotateLeft(char axis, float angle);
 
     void BuildHierarchyGraph();
     void ApplyScales();
     void ApplyMouseTranslation();
     void ApplyMouseRotation();
+    void ApplyJointTransforms();
 
 	friend std::ostream & operator << (std::ostream & os, const SceneNode & node);
 
@@ -58,6 +60,9 @@ public:
     glm::vec3 total_trans;
     glm::vec3 mouse_trans;
     glm::vec3 mouse_rot;
+
+    float jx=1;
+    float jy=1;
 
     std::list<SceneNode*> children;
 

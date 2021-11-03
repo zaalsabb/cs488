@@ -46,3 +46,5 @@ std::ostream& operator<<(std::ostream& out, const Mesh& mesh)
   out << "}";
   return out;
 }
+
+float Mesh::intersect(glm::vec3 origin, glm::vec3 dir){return 0;}

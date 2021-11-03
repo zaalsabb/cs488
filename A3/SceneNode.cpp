@@ -101,6 +101,29 @@ void SceneNode::rotate(char axis, float angle) {
 	trans_unscaled = rot_matrix * trans_unscaled;
 	trans_orig = trans;
 }
+//---------------------------------------------------------------------------------------
+void SceneNode::rotateLeft(char axis, float angle) {
+	vec3 rot_axis;
+
+	switch (axis) {
+		case 'x':
+			rot_axis = vec3(1,0,0);
+			break;
+		case 'y':
+			rot_axis = vec3(0,1,0);
+	        break;
+		case 'z':
+			rot_axis = vec3(0,0,1);
+	        break;
+		default:
+			break;
+	}
+	vec4 rot_axis1 = glm::inverse(trans)*glm::vec4(rot_axis, 0.0f);
+	mat4 rot_matrix = glm::rotate(degreesToRadians(angle), vec3(rot_axis1[0],rot_axis1[1],rot_axis1[2]));
+	trans =  trans * rot_matrix;
+	trans_unscaled = trans_unscaled * rot_matrix;
+	trans_orig = trans;
+}
 
 //---------------------------------------------------------------------------------------
 void SceneNode::scale(const glm::vec3 & amount) {
@@ -127,6 +150,19 @@ void SceneNode::BuildHierarchyGraph(){
 }
 
 //---------------------------------------------------------------------------------------
+void SceneNode::ApplyJointTransforms(){
+
+	for (SceneNode * node : children) {
+		if (node->m_nodeType == NodeType::JointNode) {
+			node->rotateLeft('x',node->jx);
+			node->rotateLeft('y',node->jy);
+		}
+		node->ApplyJointTransforms();
+	}
+}
+
+
+//---------------------------------------------------------------------------------------
 void SceneNode::ApplyScales(){
 
 	for (SceneNode * node : children) {
@@ -151,11 +187,11 @@ void SceneNode::ApplyMouseTranslation(){
 //---------------------------------------------------------------------------------------
 void SceneNode::ApplyMouseRotation(){
 
-	translate(-total_trans);
-	rotate('x', mouse_rot.x);
-	rotate('y', mouse_rot.y);
-	rotate('z', mouse_rot.z);
-	translate(total_trans);
+
+	rotateLeft('x', mouse_rot.x);
+	rotateLeft('y', mouse_rot.y);
+	rotateLeft('z', mouse_rot.z);
+
 
 }
 

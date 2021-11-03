@@ -52,10 +52,13 @@ protected:
 	void renderArcCircle();
 
 	//SceneNode PickedNode;
-	int idx;
 
 	glm::mat4 m_perpsective;
 	glm::mat4 m_view;
+
+	int mode=-1;
+	bool z_buffer = true;
+	bool mode_culling = 0;
 
 	LightSource m_light;
 
@@ -91,4 +94,6 @@ protected:
 	float y0=-1;
 	float y1;
 	float dy;
+
+	bool drawTrackball = false;
 };

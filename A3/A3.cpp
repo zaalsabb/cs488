@@ -19,6 +19,7 @@ static bool show_gui = true;
 
 const size_t CIRCLE_PTS = 48;
 bool do_picking = false;
+int picked_idx = -1;
 //----------------------------------------------------------------------------------------
 // Constructor
 A3::A3(const std::string & luaSceneFile)
@@ -308,9 +309,24 @@ void A3::uploadCommonSceneUniforms() {
  */
 void A3::appLogic()
 {
-	// Place per frame, application logic here ...
+
+	if( ImGui::Button( "Reset All             (A)" ) ) {mode = 3;}
+	if( ImGui::Button( "Quit Application      (Q)" ) ) {glfwSetWindowShouldClose(m_window, GL_TRUE);}
+	if( ImGui::Button( "Circle           (C)" ) ) {if(drawTrackball){drawTrackball=false;} else{drawTrackball=true;};}
+	if( ImGui::Button( "Z-buffer         (Z)") ) {if(z_buffer){z_buffer=false;} else{z_buffer=true;};}
+	if( ImGui::Button( "Backface culling (B)") ) {mode_culling=1;}
+	if( ImGui::Button( "Backface culling (B)") ) {mode_culling=0;}
+	if( ImGui::Button( "Position/Orient. (P)")  ) {}
+
 
 	uploadCommonSceneUniforms();
+
+		
+	if (mode < 4 & mode >= 0) {
+		processLuaSceneFile(m_luaSceneFile);
+		mode = -1;
+	}	
+
 }
 
 //----------------------------------------------------------------------------------------
@@ -333,21 +349,6 @@ void A3::guiLogic()
 	ImGuiWindowFlags windowFlags(ImGuiWindowFlags_AlwaysAutoResize);
 	float opacity(0.5f);
 
-	ImGui::Begin("Properties", &showDebugWindow, ImVec2(100,100), opacity,
-			windowFlags);
-
-
-		// Add more gui elements here here ...
-
-
-		// Create Button, and check if it was clicked:
-		if( ImGui::Button( "Quit Application" ) ) {
-			glfwSetWindowShouldClose(m_window, GL_TRUE);
-		}
-
-		ImGui::Text( "Framerate: %.1f FPS", ImGui::GetIO().Framerate );
-
-	ImGui::End();
 }
 
 //----------------------------------------------------------------------------------------
@@ -384,7 +385,14 @@ static void updateShaderUniforms(
 			//-- Set Material values:
 			location = shader.getUniformLocation("material.kd");
 			vec3 kd = node.material.kd;
-			glUniform3fv(location, 1, value_ptr(kd));
+			if ( picked_idx == node.m_nodeId ) {
+				float r = 1.0;
+				float g = 0.0;
+				float b = 0.0;
+				glUniform3f( location, r, g, b );
+			} else {
+				glUniform3fv(location, 1, value_ptr(kd));
+			}
 			CHECK_GL_ERRORS;
 		}
 		CHECK_GL_ERRORS;
@@ -400,20 +408,35 @@ static void updateShaderUniforms(
  */
 void A3::draw() {
 
+	if (mode_culling == 1){
+		glEnable(GL_CULL_FACE);
+		glCullFace(GL_BACK);
+		glFrontFace(GL_CW); 
+	} else if (mode_culling==0) {
+		glEnable(GL_CULL_FACE);
+		glCullFace(GL_FRONT);
+		glFrontFace(GL_CW); 
+	}
+
+	if (z_buffer) {
+		glEnable( GL_DEPTH_TEST ); 
+	}
 
 	// recursively build hierarchical graph transformations
 	m_rootNode->BuildHierarchyGraph();
 
 	m_rootNode->ApplyScales();
 
-	glEnable( GL_DEPTH_TEST );
+
 	renderSceneGraph(*m_rootNode);
 
-
-	glDisable( GL_DEPTH_TEST );
-	renderArcCircle();
+	if (drawTrackball) {
+		glDisable( GL_DEPTH_TEST );
+		renderArcCircle();
+	}
 
 	m_rootNode->ResetChildrenTransforms();
+
 }
 
 
@@ -426,8 +449,8 @@ void A3::renderSceneGraph(const SceneNode & root) {
 
 	for (const SceneNode * node : root.children) {
 
-		if (node->m_nodeType != NodeType::GeometryNode)
-			continue;
+		//if (node->m_nodeType != NodeType::GeometryNode)
+		//	continue;
 
 		const GeometryNode * geometryNode = static_cast<const GeometryNode *>(node);
 
@@ -452,10 +475,9 @@ void A3::renderSceneGraph(const SceneNode & root) {
 void A3::renderSceneGraphChildren(const SceneNode * root) {
 
 
-	for (const SceneNode * node : root->children) {
+	for ( SceneNode * node : root->children) {
 
-		if (node->m_nodeType != NodeType::GeometryNode)
-			continue;
+
 
 		const GeometryNode * geometryNode = static_cast<const GeometryNode *>(node);
 
@@ -488,11 +510,13 @@ void A3::renderArcCircle() {
 		GLint m_location = m_shader_arcCircle.getUniformLocation( "M" );
 		float aspect = float(m_framebufferWidth)/float(m_framebufferHeight);
 		glm::mat4 M;
+
 		if( aspect > 1.0 ) {
-			M = glm::scale( glm::mat4(), glm::vec3( 0.5/aspect, 0.5, 1.0 ) );
+			M = glm::scale( M, glm::vec3( 0.5/aspect, 0.5, 1.0 ) );
 		} else {
-			M = glm::scale( glm::mat4(), glm::vec3( 0.5, 0.5*aspect, 1.0 ) );
+			M = glm::scale( M, glm::vec3( 0.5, 0.5*aspect, 1.0 ) );
 		}
+		//M = glm::translate(M,m_rootNode->mouse_trans);
 		glUniformMatrix4fv( m_location, 1, GL_FALSE, value_ptr( M ) );
 		glDrawArrays( GL_LINE_LOOP, 0, CIRCLE_PTS );
 	m_shader_arcCircle.disable();
@@ -533,6 +557,7 @@ bool A3::mouseMoveEvent (
 		double yPos
 ) {
 	bool eventHandled(false);
+
 	if (!ImGui::IsMouseHoveringAnyWindow()) {
 		x1=xPos;
 		y1=yPos;
@@ -550,6 +575,10 @@ bool A3::mouseMoveEvent (
 			m_rootNode->mouse_trans.y = dy/100;
 			m_rootNode->mouse_trans.z = 0;
 			m_rootNode->ApplyMouseTranslation();
+
+			m_rootNode->jx = 0;
+			m_rootNode->jx = 0;
+			m_rootNode->ApplyJointTransforms();
 		} else if (ImGui::IsMouseDown(1))
 		{
 			dy = -(y1-y0);
@@ -564,14 +593,17 @@ bool A3::mouseMoveEvent (
 			dy = -(y1-y0);
 			x0 = x1;
 			y0 = y1;
-			m_rootNode->mouse_rot.x = dx/10;
-			m_rootNode->mouse_rot.y = dy/10;
+			m_rootNode->mouse_rot.y = dx/10;
+			m_rootNode->mouse_rot.x = -dy/10;
 			m_rootNode->ApplyMouseRotation();
+
 		} else {
 			x0 = x1;
 			y0 = y1;
 		}
+
 	}
+
 	return eventHandled;
 }
 
@@ -606,9 +638,9 @@ bool A3::mouseButtonInputEvent (
 		GLubyte buffer[4] = { 0, 0, 0, 0 };
 		glReadPixels( int(xPos), int(yPos), 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, buffer );
 
-		idx = buffer[0] + (buffer[1] << 8) + (buffer[2] << 16);
+		picked_idx = buffer[0] + (buffer[1] << 8) + (buffer[2] << 16);
 
-		cout << idx << endl;
+		cout << picked_idx << endl;
 
 		do_picking = false;
 	}
@@ -662,7 +694,16 @@ bool A3::keyInputEvent (
 
 		}
 	}
-	// Fill in with event handling code...
+
+
+
+	if( key==GLFW_KEY_A ) {mode = 3;}
+	if( key==GLFW_KEY_Q ) {glfwSetWindowShouldClose(m_window, GL_TRUE);}
+	if( key==GLFW_KEY_C ) {if(drawTrackball){drawTrackball=false;} else{drawTrackball=true;};}
+	if( key==GLFW_KEY_Z ) {if(z_buffer){z_buffer=false;} else{z_buffer=true;};}
+	if( key==GLFW_KEY_B ) {mode_culling=1;}
+	if( key==GLFW_KEY_F ) {mode_culling=0;}
+	if( key==GLFW_KEY_P ) {}
 
 	return eventHandled;
 }
