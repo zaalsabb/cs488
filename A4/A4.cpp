@@ -3,23 +3,24 @@
 #include "A4.hpp"
 #include "GeometryNode.hpp"
 #include "JointNode.hpp"
+#include "PhongMaterial.hpp"
 
 float PI = 3.1415;
 
 void A4_Render(
-		// What to render  
+		// What to render
 		SceneNode * root,
 
-		// Image to write to, set to a given width and height  
+		// Image to write to, set to a given width and height
 		Image & image,
 
-		// Viewing parameters  
+		// Viewing parameters
 		const glm::vec3 & eye,
 		const glm::vec3 & view,
 		const glm::vec3 & up,
 		double fovy,
 
-		// Lighting parameters  
+		// Lighting parameters
 		const glm::vec3 & ambient,
 		const std::list<Light *> & lights
 ) {
@@ -55,51 +56,63 @@ void A4_Render(
 	glm::vec3 pixel_cam;
 	glm::vec3 pixel_world;
 	glm::vec3 di;
-	float t;
-	const GeometryNode * geometryNode;
 
-	bool hit;
 
 	for (uint y = 0; y < h; ++y) {
 		for (uint x = 0; x < w; ++x) {
 
-			hit = false;
+			const GeometryNode * geometryNode;
+			const GeometryNode * geometryNode0;
 
-			pixel_cam[0] = film_w*(x+0.5f-w/2)/w;
+			bool hit_confirmed = false;
+			float t;
+			float t0 = 0;
+			glm::vec3 n;
+			glm::vec3 hit;
+
+			pixel_cam[0] = film_w*(w/2-(x+0.5f))/w;
 			pixel_cam[1] = film_h*(y+0.5f-h/2)/h;
 			pixel_cam[2] = film_z;
 
 			pixel_world = pixel_cam[0]*ui + pixel_cam[1]*vi + pixel_cam[2]*wi + ei;
-			
+
 			di = glm::normalize(ei-pixel_world);
 
 			for (SceneNode * node : root->children) {
 				if (node->m_nodeType == NodeType::GeometryNode)
 					geometryNode = static_cast<const GeometryNode *>(node);
-					t = geometryNode->m_primitive->intersect(ei,di);
+					t = geometryNode->m_primitive->intersect(ei,di,hit,n);
 					if (t != 0){
-						hit = true;
-					}
+						hit_confirmed = true;
+						if (t0 == 0 | t < t0) {
+							t0 = t;
+							geometryNode0 = geometryNode;
+						}
 
-					//std::cout << geometryNode->m_primitive->intersect(ei,di) << std::endl;
+					}
 			}
 
-			if (hit){
+			if (hit_confirmed){
 
-				// Red: 
-				image(x, y, 0) = (double)0.0;
-				// Green: 
-				image(x, y, 1) = (double)0.0;
-				// Blue: 
-				image(x, y, 2) = (double)0.0;
+				PhongMaterial* mat = static_cast<PhongMaterial*>(geometryNode0->m_material);
+				//std::cout << glm::to_string(mat->m_ks ) << std::endl;
+
+				glm::vec3 L = mat->m_kd * ambient;
+
+				// Red:
+				image(x, y, 0) = (double)L[0];
+				// Green:
+				image(x, y, 1) = (double)L[1];
+				// Blue:
+				image(x, y, 2) = (double)L[2];
 			} else {
 
-				// Red: 
-				image(x, y, 0) = (double)1.0;
-				// Green: 
-				image(x, y, 1) = (double)1.0;
-				// Blue: 
-				image(x, y, 2) = (double)1.0;
+				// Red:
+				image(x, y, 0) = (double)0.0;
+				// Green:
+				image(x, y, 1) = (double)0.0;
+				// Blue:
+				image(x, y, 2) = (double)0.0;
 			}
 
 		}

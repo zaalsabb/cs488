@@ -30,7 +30,7 @@ std::ostream& operator<<(std::ostream& out, const Mesh& mesh)
 {
   out << "mesh {";
   /*
-  
+
   for( size_t idx = 0; idx < mesh.m_verts.size(); ++idx ) {
   	const MeshVertex& v = mesh.m_verts[idx];
   	out << glm::to_string( v.m_position );
@@ -47,4 +47,4 @@ std::ostream& operator<<(std::ostream& out, const Mesh& mesh)
   return out;
 }
 
-float Mesh::intersect(glm::vec3 origin, glm::vec3 dir){return 0;}
+float Mesh::intersect(glm::vec3 origin, glm::vec3 dir, glm::vec3 hit, glm::vec3 normal){return 0;}
