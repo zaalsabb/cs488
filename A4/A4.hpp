@@ -5,6 +5,7 @@
 #include "SceneNode.hpp"
 #include "Light.hpp"
 #include "Image.hpp"
+#include "Hit.hpp"
 
 void A4_Render(
 		// What to render
@@ -23,3 +24,6 @@ void A4_Render(
 		const glm::vec3 & ambient,
 		const std::list<Light *> & lights
 );
+
+bool rayIntersection(SceneNode * root, glm::vec3 origin, glm::vec3 dir,
+												 Hit & hit);
