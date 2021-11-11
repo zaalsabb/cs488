@@ -5,8 +5,15 @@
 #include "JointNode.hpp"
 #include "PhongMaterial.hpp"
 #include <math.h>
+#include <iomanip>      // std::setprecision
+#include "progressbar.hpp"
 
 float PI = 3.1415;
+// float FLUX = 100.0;
+float N_SOLID = 6.0;
+int MAX_RECURSION_DEPTH = 1;
+
+std::vector<SceneNode*> nodes_children;
 
 void A4_Render(
 		// What to render
@@ -25,6 +32,11 @@ void A4_Render(
 		const glm::vec3 & ambient,
 		const std::list<Light *> & lights
 ) {
+
+	// recursively build hierarchical graph transformations
+	root->BuildHierarchyGraph();
+	// root->ApplyScales();
+	// root->FlatList(nodes_children);
 
   glm::vec3 wi = glm::normalize(eye - view);
   glm::vec3 ui = glm::normalize(glm::cross(up,wi));
@@ -58,15 +70,12 @@ void A4_Render(
 	glm::vec3 pixel_world;
 	glm::vec3 dir;
 
+	std::cout << "std::precision(10):    " << std::setprecision(10) << 1.2345678901234567890f << '\n';
+
+	progressbar bar(h*w);
 
 	for (uint y = 0; y < h; ++y) {
 		for (uint x = 0; x < w; ++x) {
-
-
-			float t;
-			float t0 = 0;
-
-			Hit hit;
 
 			pixel_cam[0] = film_w*(w/2-(x+0.5f))/w;
 			pixel_cam[1] = film_h*(y+0.5f-h/2)/h;
@@ -75,89 +84,136 @@ void A4_Render(
 			pixel_world = pixel_cam[0]*ui + pixel_cam[1]*vi + pixel_cam[2]*wi + ei;
 
 			dir = glm::normalize(ei-pixel_world);
+			glm::vec3 L = shade(root, ei, dir, ambient, lights, 0);
 
-			bool hit_confirmed = rayIntersection(root, ei, dir, hit);
+			// Red:
+			image(x, y, 0) = (double)L[0];
+			// Green:
+			image(x, y, 1) = (double)L[1];
+			// Blue:
+			image(x, y, 2) = (double)L[2];
 
-			if (hit_confirmed){
+			bar.update();
 
-				//PhongMaterial* mat = static_cast<PhongMaterial*>(geometryNode0->m_material);
-				//std::cout << glm::to_string(mat->m_ks ) << std::endl;
-				glm::vec3 L = 1.2f*hit.mat.m_kd * ambient;
-				float p = hit.mat.m_shininess;
+		}
+	}
+	std::cout <<" -> Rendering Finished!"<< '\n';
+}
 
-				for (Light * light : lights){
-					glm::vec3 l = light->position - hit.pos;
-					float r = glm::length(l);
-					glm::vec3 I = 120000.0*light->colour;
-					l = l/r;
+glm::vec3 shade(SceneNode * root,
+								const glm::vec3 origin,
+								const glm::vec3 dir,
+								const glm::vec3 ambient,
+								const std::list<Light *> & lights,
+								const int recursionDepth)
+{
+	Hit hit;
+	glm::vec3 L;
+	rayIntersection(root, origin, dir, hit);
 
-					Hit hit2;
-					bool hit_confirmed2 = rayIntersection(root, hit.pos, l, hit2);
-					if (!hit_confirmed2){
-						//diffuse lighting
-						L = L + I*hit.mat.m_kd/(r*r)*std::max(0.0f,glm::dot(l,hit.n));
+	if (hit.t>0){
 
-						//specular Lighting
-						glm::vec3 h = glm::normalize(l-dir);
-						L = L + I*hit.mat.m_ks/(r*r)*pow(std::max(0.0f,glm::dot(h,hit.n)),p);
-						//std::cout << glm::to_string(n) << std::endl;
-					}
-				}
+		//PhongMaterial* mat = static_cast<PhongMaterial*>(geometryNode0->m_material);
+		//std::cout << glm::to_string(mat->m_ks ) << std::endl;
+		L = hit.mat.m_kd * ambient;
+		float p = hit.mat.m_shininess;
 
-				// Red:
-				image(x, y, 0) = (double)L[0];
-				// Green:
-				image(x, y, 1) = (double)L[1];
-				// Blue:
-				image(x, y, 2) = (double)L[2];
+		for (Light * light : lights){
+			glm::vec3 l = light->position - hit.pos;
+			float r = glm::length(l);
+			glm::vec3 I = light->colour/(light->falloff[0]+light->falloff[1]*r+light->falloff[2]*r*r);
+			l = l/r;
+
+			Hit shadow;
+			rayIntersection(root, hit.pos, l, shadow);
+			if (shadow.t==0){
+				// std::cout << glm::dot(l,hit.n) << std::endl;
+				//diffuse lighting
+				L = L + I*hit.mat.m_kd*std::max(0.0f,glm::dot(l,hit.n));
+
+				//specular Lighting
+				glm::vec3 h = glm::normalize(l-dir);
+				L = L + I*hit.mat.m_ks*pow(std::max(0.0f,glm::dot(h,hit.n)),p);
+				//std::cout << glm::to_string(n) << std::endl;
 			} else {
+				// std::cout << "shadow" << std::endl;
+			}
+		}
+		if (recursionDepth < MAX_RECURSION_DEPTH){
+			glm::vec3 R = hit.Reflection(dir);
+			float n1;
+			float n2;
 
-				// Red:
-				image(x, y, 0) = (double)0.0;
-				// Green:
-				image(x, y, 1) = (double)0.0;
-				// Blue:
-				image(x, y, 2) = (double)0.0;
+			if (glm::dot(dir,hit.n) < 0){
+				n1 = 1.0f;
+				n2 = N_SOLID;
+			} else {
+				n1 = N_SOLID;
+				n2 = 1.0f;
 			}
 
+			glm::vec3 T;
+			float F = Fresnel(n1,n2,dir,T,hit.n);
+
+			//std::cout << F << std::endl;
+			glm::vec3 refl = hit.mat.m_ks*F*shade(root, hit.pos, R, ambient, lights, recursionDepth+1);
+			glm::vec3 refr = hit.mat.m_ks/2*(1.0f-F)*shade(root, hit.pos, T, ambient, lights, recursionDepth+1);
+			L = L +refl+refr;
+		}
+	} else {
+		L = glm::vec3(0.0f,0.0f,0.0f);
+	}
+	return L;
+}
+
+void rayIntersection(SceneNode * root, glm::vec3 origin, glm::vec3 dir,Hit &hit){
+	glm::vec3 normal;
+	glm::vec3 hit_pos;
+	float t;
+	float tol = 0.01f;
+
+	const GeometryNode * geometryNode;
+
+	for (SceneNode * node : root->children) {
+		if (node->m_nodeType == NodeType::GeometryNode){
+			geometryNode = static_cast<const GeometryNode *>(node);
+			t = geometryNode->m_primitive->intersect(origin,dir,hit_pos,normal,node->trans,node->invtrans);
+			// std::cout << t << std::endl;
+			if (t > 2*tol){
+				if (hit.t == 0.0f | t < hit.t ) {
+					hit.t = t;
+					hit.pos=hit_pos;
+					hit.n=normal;
+					PhongMaterial * mat = static_cast<PhongMaterial*>(geometryNode->m_material);
+					hit.mat.m_ks = mat->m_ks;
+					hit.mat.m_kd = mat->m_kd;
+					hit.mat.m_shininess = mat->m_shininess;
+				}
+			}
+		}
+		Hit hit2;
+		rayIntersection(node,origin,dir,hit2);
+		if (hit.t==0 | (hit2.t>0 & hit2.t < hit.t)){
+			hit = hit2;
 		}
 	}
 }
 
-bool rayIntersection(SceneNode * root, glm::vec3 origin, glm::vec3 dir,
-												 Hit &hit){
-	glm::vec3 normal;
-	glm::vec3 hit_pos;
-	float t;
-	float t0 = 0.0f;
-	float tol = 0.01f;
+float Fresnel(float n1,float n2,glm::vec3 V,glm::vec3 &T, glm::vec3 N){
 
-	const GeometryNode * geometryNode;
-	const GeometryNode * geometryNode0;
+	float r = n1/n2;
+	float cos_i = std::max(abs(glm::dot(V,N)),1.0f); //entering ray V
+	float TIL = 1-r*r*(1-cos_i*cos_i);
+	if (TIL>=0){
+		T = glm::normalize(r*V + (r*cos_i - sqrt(TIL))*N);
 
-	bool hit_confirmed = false;
-	for (SceneNode * node : root->children) {
-		if (node->m_nodeType == NodeType::GeometryNode){
-			geometryNode = static_cast<const GeometryNode *>(node);
-			t = geometryNode->m_primitive->intersect(origin,dir,hit_pos,normal);
-			if (t > tol){
-				hit_confirmed = true;
-				if (t0 == 0 | t < t0 ) {
-					t0 = t;
-					geometryNode0 = geometryNode;
-					hit.pos=hit_pos;
-					hit.n=normal;
-				}
-			}
-		}
+		float cos_o = std::max(abs(glm::dot(T,N)),1.0f); //exiting ray T
+
+		float ps = (n1*cos_i-n2*cos_o)/(n1*cos_i+n2*cos_o);
+		float pt = (n1*cos_o-n2*cos_i)/(n1*cos_o+n2*cos_i);
+
+		return 0.5f*(ps*ps + pt*pt);
+	} else {
+		return 1.0f;
 	}
-
-	if (hit_confirmed){
-		PhongMaterial * mat = static_cast<PhongMaterial*>(geometryNode0->m_material);
-		hit.mat.m_ks = mat->m_ks;
-		hit.mat.m_kd = mat->m_kd;
-		hit.mat.m_shininess = mat->m_shininess;
-	}
-
-	return hit_confirmed;
 }

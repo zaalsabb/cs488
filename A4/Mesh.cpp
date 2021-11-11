@@ -48,24 +48,52 @@ std::ostream& operator<<(std::ostream& out, const Mesh& mesh)
   return out;
 }
 
-float Mesh::intersect(glm::vec3 origin, glm::vec3 dir, glm::vec3 &hit, glm::vec3 &normal0){
+float Mesh::intersect(glm::vec3 origin, glm::vec3 dir, glm::vec3 &hit, glm::vec3 &normal0,glm::mat4 trans,glm::mat4 invtrans){
 
 	float t;
 	float t0=0.0f;
 	float u;
 	float v;
-	glm::vec3 c0;
-	glm::vec3 c1;
-	glm::vec3 c2;
-	glm::vec3 normal;
+	// glm::vec3 c0;
+	// glm::vec3 c1;
+	// glm::vec3 c2;
+	// glm::vec3 normal;
+
+	origin = origin-tol*dir;
+
+	// glm::vec4 origin2 = trans * glm::vec4(origin.x,origin.y,origin.z,1.0f);
+	// glm::vec4 dir2 = trans * glm::vec4(dir.x,dir.y,dir.z,0.0f);
+	//
+	// origin.x = origin2.x/origin2.w;
+	// origin.y = origin2.y/origin2.w;
+	// origin.z = origin2.z/origin2.w;
+	//
+	// dir.x = dir2.x;
+	// dir.y = dir2.y;
+	// dir.z = dir2.z;
+	// dir = glm::normalize(dir);
+
+	// std::cout << glm::to_string(trans) << std::endl;
+	// TransformCoordinates(trans);
 
 	for (int i=0; i<m_faces.size(); i++){
 
-		c0 = m_vertices[(int)m_faces[i].v1];
-		c1 = m_vertices[(int)m_faces[i].v2];
-		c2 = m_vertices[(int)m_faces[i].v3];
+		glm::vec3 c0 = m_vertices[(int)m_faces[i].v1];
+		glm::vec3 c1 = m_vertices[(int)m_faces[i].v2];
+		glm::vec3 c2 = m_vertices[(int)m_faces[i].v3];
 
-		normal = glm::normalize(glm::cross(c1-c0,c2-c0));
+		glm::vec4 c0i = trans * glm::vec4(c0.x,c0.y,c0.z,1.0f);
+		glm::vec4 c1i = trans * glm::vec4(c1.x,c1.y,c1.z,1.0f);
+		glm::vec4 c2i = trans * glm::vec4(c2.x,c2.y,c2.z,1.0f);
+
+		c0 = glm::vec3(c0i.x,c0i.y,c0i.z)/c0i.w;
+		c1 = glm::vec3(c1i.x,c1i.y,c1i.z)/c1i.w;
+		c2 = glm::vec3(c2i.x,c2i.y,c2i.z)/c2i.w;
+
+		glm::vec3 normal = glm::normalize(glm::cross(c1-c0,c2-c0));
+		// if (glm::dot(dir,normal)>0){
+		// 	normal = -normal;
+		// }
 
 		t = glm::dot((c0-origin),normal)/glm::dot(normal,dir);
 		hit = origin + t*dir;
@@ -85,6 +113,23 @@ float Mesh::intersect(glm::vec3 origin, glm::vec3 dir, glm::vec3 &hit, glm::vec3
 	}
 	hit = origin + t0*dir;
 	return t0;
+}
+
+void Mesh::TransformCoordinates(glm::mat4 trans){
+	for (int i=0; i<m_faces.size(); i++){
+
+		glm::vec3 c0 = m_vertices[(int)m_faces[i].v1];
+		glm::vec3 c1 = m_vertices[(int)m_faces[i].v2];
+		glm::vec3 c2 = m_vertices[(int)m_faces[i].v3];
+
+		glm::vec4 c0i = trans * glm::vec4(c0.x,c0.y,c0.z,1.0f);
+		glm::vec4 c1i = trans * glm::vec4(c1.x,c1.y,c1.z,1.0f);
+		glm::vec4 c2i = trans * glm::vec4(c2.x,c2.y,c2.z,1.0f);
+
+		m_vertices[(int)m_faces[i].v1] = glm::vec3(c0i.x,c0i.y,c0i.z)/c0i.w;
+		m_vertices[(int)m_faces[i].v2] = glm::vec3(c1i.x,c1i.y,c1i.z)/c1i.w;
+		m_vertices[(int)m_faces[i].v3] = glm::vec3(c2i.x,c2i.y,c2i.z)/c2i.w;
+	}
 }
 
 bool Mesh::SameSide(glm::vec3 p1,glm::vec3 p2,glm::vec3 a,glm::vec3 b){

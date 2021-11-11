@@ -91,18 +91,47 @@ void SceneNode::rotate(char axis, float angle) {
 		default:
 			break;
 	}
-	mat4 rot_matrix = glm::rotate(degreesToRadians(angle), rot_axis);
-	set_transform( rot_matrix * trans );
+  mat4 rot_matrix = glm::rotate(degreesToRadians(angle), rot_axis);
+	trans = rot_matrix * trans;
+	trans_unscaled = rot_matrix * trans_unscaled;
 }
 
 //---------------------------------------------------------------------------------------
 void SceneNode::scale(const glm::vec3 & amount) {
-	set_transform( glm::scale(amount) * trans );
+	// s = amount;
+  trans = glm::scale(amount) * trans;
 }
 
 //---------------------------------------------------------------------------------------
 void SceneNode::translate(const glm::vec3& amount) {
-	set_transform( glm::translate(amount) * trans );
+  trans = glm::translate(amount) * trans;
+	trans_unscaled = glm::translate(amount) * trans_unscaled;
+}
+
+//---------------------------------------------------------------------------------------
+void SceneNode::BuildHierarchyGraph(){
+
+	for (SceneNode * node : children) {
+		node->set_transform(trans*node->trans);
+		node->BuildHierarchyGraph();
+	}
+}
+
+//---------------------------------------------------------------------------------------
+void SceneNode::ApplyScales(){
+
+	for (SceneNode * node : children) {
+		node->set_transform(node->trans*glm::scale(node->s));
+		node->ApplyScales();
+	}
+}
+//---------------------------------------------------------------------------------------
+void SceneNode::FlatList(std::vector<SceneNode*> &list){
+
+	for (SceneNode * node : children) {
+		list.push_back(node);
+		node->FlatList(list);
+	}
 }
 
 

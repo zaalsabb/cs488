@@ -6,6 +6,7 @@
 #include "Light.hpp"
 #include "Image.hpp"
 #include "Hit.hpp"
+#include <vector>
 
 void A4_Render(
 		// What to render
@@ -25,5 +26,14 @@ void A4_Render(
 		const std::list<Light *> & lights
 );
 
-bool rayIntersection(SceneNode * root, glm::vec3 origin, glm::vec3 dir,
+void rayIntersection(SceneNode * root, glm::vec3 origin, glm::vec3 dir,
 												 Hit & hit);
+												 
+glm::vec3 shade(SceneNode * root,
+						const glm::vec3 origin,
+						const glm::vec3 dir,
+						const glm::vec3 ambient,
+						const std::list<Light *> & lights,
+						const int recursionDepth);
+
+float Fresnel(float n1,float n2,glm::vec3 V,glm::vec3 &T, glm::vec3 N);

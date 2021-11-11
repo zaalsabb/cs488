@@ -30,8 +30,9 @@ struct Triangle
 class Mesh : public Primitive {
 public:
   Mesh( const std::string& fname );
-  virtual float intersect(glm::vec3 origin, glm::vec3 dir, glm::vec3 &hit, glm::vec3 &normal);
+  virtual float intersect(glm::vec3 origin, glm::vec3 dir, glm::vec3 &hit, glm::vec3 &normal,glm::mat4 trans,glm::mat4 invtrans);
 	virtual bool SameSide(glm::vec3 p1,glm::vec3 p2,glm::vec3 a,glm::vec3 b);
+	virtual void TransformCoordinates(glm::mat4 trans);
 
 private:
 	std::vector<glm::vec3> m_vertices;
