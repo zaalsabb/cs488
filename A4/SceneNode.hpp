@@ -41,7 +41,7 @@ public:
 
 		void BuildHierarchyGraph();
 		void ApplyScales();
-		void FlatList(std::vector<SceneNode*> &list);
+		void ApplyTransform();
 
 	friend std::ostream & operator << (std::ostream & os, const SceneNode & node);
 
@@ -49,7 +49,9 @@ public:
     glm::mat4 trans;
     glm::mat4 invtrans;
 		glm::mat4 trans_unscaled;
-		glm::vec3 s = glm::vec3(1,1,1);
+		glm::mat4 s;
+		glm::mat4 t;
+		glm::mat4 R;
 
     std::list<SceneNode*> children;
 

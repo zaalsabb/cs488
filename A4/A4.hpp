@@ -28,7 +28,7 @@ void A4_Render(
 
 void rayIntersection(SceneNode * root, glm::vec3 origin, glm::vec3 dir,
 												 Hit & hit);
-												 
+
 glm::vec3 shade(SceneNode * root,
 						const glm::vec3 origin,
 						const glm::vec3 dir,

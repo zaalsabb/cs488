@@ -8,12 +8,14 @@
 #include <iomanip>      // std::setprecision
 #include "progressbar.hpp"
 
-float PI = 3.1415;
-// float FLUX = 100.0;
+// parameters user can set
 float N_SOLID = 6.0;
 int MAX_RECURSION_DEPTH = 1;
+bool SHADOWS_ON = true;
+bool 	REFLECTIONS_ON = true;
 
-std::vector<SceneNode*> nodes_children;
+//constants
+float PI = 3.1415;
 
 void A4_Render(
 		// What to render
@@ -35,8 +37,8 @@ void A4_Render(
 
 	// recursively build hierarchical graph transformations
 	root->BuildHierarchyGraph();
-	// root->ApplyScales();
-	// root->FlatList(nodes_children);
+	// root->ApplyTransform();
+	root->ApplyScales();
 
   glm::vec3 wi = glm::normalize(eye - view);
   glm::vec3 ui = glm::normalize(glm::cross(up,wi));
@@ -126,7 +128,7 @@ glm::vec3 shade(SceneNode * root,
 
 			Hit shadow;
 			rayIntersection(root, hit.pos, l, shadow);
-			if (shadow.t==0){
+			if (shadow.t==0 | !SHADOWS_ON){
 				// std::cout << glm::dot(l,hit.n) << std::endl;
 				//diffuse lighting
 				L = L + I*hit.mat.m_kd*std::max(0.0f,glm::dot(l,hit.n));
@@ -139,7 +141,7 @@ glm::vec3 shade(SceneNode * root,
 				// std::cout << "shadow" << std::endl;
 			}
 		}
-		if (recursionDepth < MAX_RECURSION_DEPTH){
+		if (recursionDepth < MAX_RECURSION_DEPTH & REFLECTIONS_ON){
 			glm::vec3 R = hit.Reflection(dir);
 			float n1;
 			float n2;

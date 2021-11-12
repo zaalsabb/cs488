@@ -91,7 +91,7 @@ for _, pt in pairs({
    cow_instance:scale(1.4, 1.4, 1.4)
    cow_instance:rotate('Y', pt[2])
    cow_instance:translate(table.unpack(pt[1]))
-   
+
    cow_number = cow_number + 1
 end
 

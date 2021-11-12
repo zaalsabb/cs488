@@ -38,32 +38,36 @@ float NonhierSphere::intersect(glm::vec3 origin, glm::vec3 dir, glm::vec3 &hit, 
 	double C = (double)glm::dot(origin-m_pos,origin-m_pos)-m_radius*m_radius;
 
 	double t[2];
-	double t_ans;
+	double t0;
 
 
 	quadraticRoots(A, B, C, t);
 
 	if (t[0]>0 & t[1]>0){
-		t_ans = std::min(t[0],t[1]);
+		t0 = std::min(t[0],t[1]);
 	} else if (t[0]>0) {
 
-		t_ans = t[0];
+		t0 = t[0];
 
 	} else if (t[1]>0) {
 
-		t_ans = t[1];
+		t0 = t[1];
 	} else {
 
-		t_ans = 0;
+		t0 = 0;
 	}
-	hit = origin + (float)t_ans*dir;
+	hit = origin + (float)t0*dir;
 	normal = (hit-m_pos)/(float)m_radius;
 
 	hit = glm::vec3(trans * glm::vec4(hit,1.0f));
 	normal = glm::vec3(trans * glm::vec4(normal,0.0f));
+	// if (t0>=0){
+	// 	t0 = glm::length(hit-origin);
+	// } else {
+	// 	t0 = -glm::length(hit-origin);
+	// }
 
-
-	return t_ans;
+	return t0;
 
 }
 
@@ -153,6 +157,11 @@ float NonhierBox::intersect(glm::vec3 origin, glm::vec3 dir, glm::vec3 &hit, glm
 
 	hit = glm::vec3(trans * glm::vec4(hit,1.0f));
 	normal0 = glm::vec3(trans * glm::vec4(normal0,0.0f));
+	// if (t0>=0){
+	// 	t0 = glm::length(hit-origin);
+	// } else {
+	// 	t0 = -glm::length(hit-origin);
+	// }
 
 	return t0;
 
@@ -254,6 +263,11 @@ float Cube::intersect(glm::vec3 origin, glm::vec3 dir, glm::vec3 &hit, glm::vec3
 
 		hit = glm::vec3(trans * glm::vec4(hit,1.0f));
 		normal0 = glm::vec3(trans * glm::vec4(normal0,0.0f));
+		// if (t0>=0){
+		// 	t0 = glm::length(hit-origin);
+		// } else {
+		// 	t0 = -glm::length(hit-origin);
+		// }
 
 		return t0;
 
@@ -277,33 +291,36 @@ float Sphere::intersect(glm::vec3 origin, glm::vec3 dir, glm::vec3 &hit, glm::ve
 		double C = (double)glm::dot(origin-m_pos,origin-m_pos)-m_radius*m_radius;
 
 		double t[2];
-		double t_ans;
+		double t0;
 
 		// std::cout << glm::to_string(trans) << std::endl;
 
 		quadraticRoots(A, B, C, t);
 
 		if (t[0]>0 & t[1]>0){
-			t_ans = std::min(t[0],t[1]);
+			t0 = std::min(t[0],t[1]);
 		} else if (t[0]>0) {
 
-			t_ans = t[0];
+			t0 = t[0];
 
 		} else if (t[1]>0) {
 
-			t_ans = t[1];
+			t0 = t[1];
 		} else {
 
-			t_ans = 0;
+			t0 = 0;
 		}
 
-		hit = origin + (float)t_ans*dir;
+		hit = origin + (float)t0*dir;
 		normal = (hit-m_pos)/(float)m_radius;
 
 		hit = glm::vec3(trans * glm::vec4(hit,1.0f));
 		normal = glm::vec3(trans * glm::vec4(normal,0.0f));
+		// if (t0>=0){
+		// 	t0 = glm::length(hit-origin);
+		// } else {
+		// 	t0 = -glm::length(hit-origin);
+		// }
 
-		// t_ans = glm::length(hit-origin);
-
-		return t_ans;
+		return t0;
 }
