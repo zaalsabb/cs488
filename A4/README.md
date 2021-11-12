@@ -29,14 +29,15 @@ For files in A4/ folder that are outside Assets folder (sample.lua) do the follo
 ```
 The screenshot will be saved in A4/ folder.
 
-## Notes about Implemented Objectives
+## Notes
 ------------
 1. Unfortunately, I was not able to implement hierarchical transformations fully correctly. My implementation of hierarchical transformations do work for hier.lua, but not for simple-cow.lua or macho-cow.lua. This is possibly because my code could not resolve the correct order for local scale, translation, and rotation of objects.
 2. Other required features such as shadows, mesh/sphere/cube intersections all work correctly.
 3. I implemented reflections and refractions as my additional feature for this assignment. These are controlled through the calculated Fresnel term.
 4. My novel scene of a pool table is in sample.lua, which can be seen in sample.png. My best looking scene is in screenshot.png (nonhier scene).
 5. To speed up computations, some parameters such as shadows, reflections, and recursion depth can be turned off or modified at the top of the A4.cpp file. Other parameters such as index of refraction for solids (default = 6) can also be changed.
-6. **References:** The reflections/refractions algorithm was inspired from lecture notes in (1). The triangle intersection algorithm was implemented from (2). The progressbar file header file was imported directly from the repository in (3).
+6. macho-cow.lua takes approximately 30-60 minutes to render because of the complex mesh.
+7. **References:** The reflections/refractions algorithm was inspired from lecture notes in (1). The triangle intersection algorithm was implemented from (2). The progressbar file header file was imported directly from the repository in (3).
 
 ## References
 ------------
