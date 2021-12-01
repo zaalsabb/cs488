@@ -21,7 +21,7 @@ Cone::~Cone()
 {
 }
 
-Cone::~Cylinder()
+Cylinder::~Cylinder()
 {
 }
 
@@ -149,8 +149,8 @@ float Cylinder::intersect(glm::vec3 origin, glm::vec3 dir, glm::vec3 &hit, glm::
 	glm::vec3 V = glm::vec3(0,-1,0);
 
 	double A = (double)pow(glm::dot(dir,V),2);
-	double B = (double)2*(glm::dot(V,(origin-m_pos))*glm::dot(V,dir);
-	double C = (double)pow(glm::dot(V,origin-m_pos),2)-glm::dot(origin-m_pos,origin-m_pos)*cos2_i;
+	double B = (double)2*(glm::dot(V,(origin-m_pos))*glm::dot(V,dir));
+	double C = (double)pow(glm::dot(V,origin-m_pos),2)-glm::dot(origin-m_pos,origin-m_pos);
 
 	double t[2];
 	double t0;

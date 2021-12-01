@@ -55,7 +55,7 @@ class Cylinder : public Primitive {
 public:
   Cylinder(const glm::vec3& pos, double height, double radius)
     : m_pos(pos), m_height(height), m_radius(radius) {}
-  virtual ~Cone();
+  virtual ~Cylinder();
   virtual float intersect(glm::vec3 origin, glm::vec3 dir, glm::vec3 &hit, glm::vec3 &normal,glm::mat4 trans,glm::mat4 invtrans);
 
 private:
