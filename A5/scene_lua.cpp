@@ -284,7 +284,7 @@ int gr_cylinder_cmd(lua_State* L)
   double height = luaL_checknumber(L, 3);
   double radius = luaL_checknumber(L, 4);
 
-  data->node = new GeometryNode(name, new Cone(pos, height, radius));
+  data->node = new GeometryNode(name, new Cylinder(pos, height, radius));
 
   luaL_getmetatable(L, "gr.node");
   lua_setmetatable(L, -2);

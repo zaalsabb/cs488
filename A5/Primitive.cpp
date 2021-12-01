@@ -4,6 +4,8 @@
 #include <vector>
 #include <glm/ext.hpp>
 
+using namespace glm;
+
 
 Primitive::~Primitive()
 {
@@ -33,17 +35,17 @@ NonhierBox::~NonhierBox()
 {
 }
 
-float NonhierSphere::intersect(glm::vec3 origin, glm::vec3 dir, glm::vec3 &hit, glm::vec3 &normal,glm::mat4 trans,glm::mat4 invtrans){
+float NonhierSphere::intersect(vec3 origin, vec3 dir, vec3 &hit, vec3 &normal,mat4 trans,mat4 invtrans){
 
 	origin = origin-tol*dir;
 
-	origin = glm::vec3(invtrans * glm::vec4(origin,1.0f));
-	dir = glm::vec3(invtrans * glm::vec4(dir,0.0f));
+	origin = vec3(invtrans * vec4(origin,1.0f));
+	dir = vec3(invtrans * vec4(dir,0.0f));
 
 
-	double A = (double)glm::dot(dir,dir);
-	double B = (double)2*glm::dot(dir,(origin-m_pos));
-	double C = (double)glm::dot(origin-m_pos,origin-m_pos)-m_radius*m_radius;
+	double A = (double)dot(dir,dir);
+	double B = (double)2*dot(dir,(origin-m_pos));
+	double C = (double)dot(origin-m_pos,origin-m_pos)-m_radius*m_radius;
 
 	double t[2];
 	double t0;
@@ -67,34 +69,34 @@ float NonhierSphere::intersect(glm::vec3 origin, glm::vec3 dir, glm::vec3 &hit, 
 	hit = origin + (float)t0*dir;
 	normal = (hit-m_pos)/(float)m_radius;
 
-	hit = glm::vec3(trans * glm::vec4(hit,1.0f));
-	normal = glm::vec3(trans * glm::vec4(normal,0.0f));
+	hit = vec3(trans * vec4(hit,1.0f));
+	normal = vec3(trans * vec4(normal,0.0f));
 	// if (t0>=0){
-	// 	t0 = glm::length(hit-origin);
+	// 	t0 = length(hit-origin);
 	// } else {
-	// 	t0 = -glm::length(hit-origin);
+	// 	t0 = -length(hit-origin);
 	// }
 
 	return t0;
 
 }
 
-float Cone::intersect(glm::vec3 origin, glm::vec3 dir, glm::vec3 &hit, glm::vec3 &normal,glm::mat4 trans,glm::mat4 invtrans){
+float Cone::intersect(vec3 origin, vec3 dir, vec3 &hit, vec3 &normal,mat4 trans,mat4 invtrans){
 
 	//std::cout << m_height << std::endl;
 
 	origin = origin-tol*dir;
 
-	origin = glm::vec3(invtrans * glm::vec4(origin,1.0f));
-	dir = glm::vec3(invtrans * glm::vec4(dir,0.0f));
+	origin = vec3(invtrans * vec4(origin,1.0f));
+	dir = vec3(invtrans * vec4(dir,0.0f));
 
 	double cos2_i = m_height*m_height/(m_height*m_height + m_radius*m_radius);
 
-	glm::vec3 V = glm::vec3(0,-1,0);
+	vec3 V = vec3(0,-1,0);
 
-	double A = (double)pow(glm::dot(dir,V),2)-cos2_i;
-	double B = (double)2*(glm::dot(V,(origin-m_pos))*glm::dot(V,dir)-glm::dot(dir,origin-m_pos)*cos2_i);
-	double C = (double)pow(glm::dot(V,origin-m_pos),2)-glm::dot(origin-m_pos,origin-m_pos)*cos2_i;
+	double A = (double)pow(dot(dir,V),2)-cos2_i;
+	double B = (double)2*(dot(V,(origin-m_pos))*dot(V,dir)-dot(dir,origin-m_pos)*cos2_i);
+	double C = (double)pow(dot(V,origin-m_pos),2)-dot(origin-m_pos,origin-m_pos)*cos2_i;
 
 	double t[2];
 	double t0;
@@ -116,41 +118,43 @@ float Cone::intersect(glm::vec3 origin, glm::vec3 dir, glm::vec3 &hit, glm::vec3
 		t0 = 0;
 	}
 
-	glm::vec3 hit0 = origin + (float)t0*dir;
+	vec3 hit0 = origin + (float)t0*dir;
 	if (hit0[1]-m_pos[1]>0 | hit0[1]-m_pos[1]<-m_height){
 		return 0;
 	}
 
 	hit = hit0;
-	glm::vec3 n2 = glm::cross(hit-origin,hit-m_pos);
-	normal = glm::normalize(glm::cross(n2,hit-m_pos));
+	vec3 n2 = cross(hit-origin,hit-m_pos);
+	normal = normalize(cross(n2,hit-m_pos));
 
-	hit = glm::vec3(trans * glm::vec4(hit,1.0f));
-	normal = glm::vec3(trans * glm::vec4(normal,0.0f));
+	hit = vec3(trans * vec4(hit,1.0f));
+	normal = vec3(trans * vec4(normal,0.0f));
 	// if (t0>=0){
-	// 	t0 = glm::length(hit-origin);
+	// 	t0 = length(hit-origin);
 	// } else {
-	// 	t0 = -glm::length(hit-origin);
+	// 	t0 = -length(hit-origin);
 	// }
 	return t0;
 
 }
 
 
-float Cylinder::intersect(glm::vec3 origin, glm::vec3 dir, glm::vec3 &hit, glm::vec3 &normal,glm::mat4 trans,glm::mat4 invtrans){
+float Cylinder::intersect(vec3 origin, vec3 dir, vec3 &hit, vec3 &normal,mat4 trans,mat4 invtrans){
 
 	//std::cout << m_height << std::endl;
 
 	origin = origin-tol*dir;
 
-	origin = glm::vec3(invtrans * glm::vec4(origin,1.0f));
-	dir = glm::vec3(invtrans * glm::vec4(dir,0.0f));
+	origin = vec3(invtrans * vec4(origin,1.0f));
+	dir = vec3(invtrans * vec4(dir,0.0f));
 
-	glm::vec3 V = glm::vec3(0,-1,0);
+	vec2 dir2d = vec2(dir[0],dir[2]);
+	vec2 origin2d = vec2(origin[0],origin[2]);
+	vec2 m_pos2d = vec2(m_pos[0],m_pos[2]);
 
-	double A = (double)pow(glm::dot(dir,V),2);
-	double B = (double)2*(glm::dot(V,(origin-m_pos))*glm::dot(V,dir));
-	double C = (double)pow(glm::dot(V,origin-m_pos),2)-glm::dot(origin-m_pos,origin-m_pos);
+	double A = (double)dot(dir2d,dir2d);
+	double B = (double)2*dot(dir2d,(origin2d-m_pos2d));
+	double C = (double)dot(origin2d-m_pos2d,origin2d-m_pos2d)-m_radius*m_radius;
 
 	double t[2];
 	double t0;
@@ -172,44 +176,65 @@ float Cylinder::intersect(glm::vec3 origin, glm::vec3 dir, glm::vec3 &hit, glm::
 		t0 = 0;
 	}
 
-	glm::vec3 hit0 = origin + (float)t0*dir;
-	if (hit0[1]-m_pos[1]>0 | hit0[1]-m_pos[1]<-m_height){
-		return 0;
+	vec3 hit0 = origin + (float)t0*dir;
+	vec3 normal0;
+	if (hit0[1]-m_pos[1]<0){
+		vec3 p = m_pos;
+		normal0 = vec3(0,-1,0);
+		t0 = dot((p-origin),normal0)/dot(normal0,dir);
+		hit0 = origin + (float)t0*dir;
+		if (length(vec2(hit0[0],hit0[2])-vec2(p[0],p[2]))<m_radius){
+			hit = hit0;
+			normal = normal0;
+		} else {
+			return 0;
+		}
+	} else if (hit0[1]-m_pos[1]>m_height){
+		vec3 p = m_pos+vec3(0,m_height,0);
+		normal0 = vec3(0,1,0);
+		t0 = dot((p-origin),normal0)/dot(normal0,dir);
+		hit0 = origin + (float)t0*dir;
+		if (length(vec2(hit0[0],hit0[2])-vec2(p[0],p[2]))<m_radius){
+			hit = hit0;
+			normal = normal0;
+		} else {
+			return 0;
+		}
+		
+	} else {
+		hit = hit0;
+		normal = normalize(hit - vec3(m_pos[0],hit[1],m_pos[2]));
 	}
-
-	hit = hit0;
-	glm::vec3 n2 = glm::cross(hit-origin,hit-m_pos);
-	normal = glm::normalize(glm::cross(n2,hit-m_pos));
-
-	hit = glm::vec3(trans * glm::vec4(hit,1.0f));
-	normal = glm::vec3(trans * glm::vec4(normal,0.0f));
+	
+	hit = vec3(trans * vec4(hit,1.0f));
+	normal = vec3(trans * vec4(normal,0.0f));
 	// if (t0>=0){
-	// 	t0 = glm::length(hit-origin);
+	// 	t0 = length(hit-origin);
 	// } else {
-	// 	t0 = -glm::length(hit-origin);
+	// 	t0 = -length(hit-origin);
 	// }
 	return t0;
 
 }
 
 
-float NonhierBox::intersect(glm::vec3 origin, glm::vec3 dir, glm::vec3 &hit, glm::vec3 &normal0,glm::mat4 trans,glm::mat4 invtrans){
+float NonhierBox::intersect(vec3 origin, vec3 dir, vec3 &hit, vec3 &normal0,mat4 trans,mat4 invtrans){
 
 	float t;
 	float t0=0;
 	float u;
 	float v;
-	glm::vec3 c0;
-	glm::vec3 c1;
-	glm::vec3 c2;
-	glm::vec3 normal;
+	vec3 c0;
+	vec3 c1;
+	vec3 c2;
+	vec3 normal;
 
 	origin = origin-tol*dir;
 
-	origin = glm::vec3(invtrans * glm::vec4(origin,1.0f));
-	dir = glm::vec3(invtrans * glm::vec4(dir,0.0f));
-	// glm::vec4 origin2 = trans * glm::vec4(origin.x,origin.y,origin.z,1.0f);
-	// glm::vec4 dir2 = trans * glm::vec4(dir.x,dir.y,dir.z,0.0f);
+	origin = vec3(invtrans * vec4(origin,1.0f));
+	dir = vec3(invtrans * vec4(dir,0.0f));
+	// vec4 origin2 = trans * vec4(origin.x,origin.y,origin.z,1.0f);
+	// vec4 dir2 = trans * vec4(dir.x,dir.y,dir.z,0.0f);
 	//
 	// origin.x = origin2.x/origin2.w;
 	// origin.y = origin2.y/origin2.w;
@@ -218,32 +243,32 @@ float NonhierBox::intersect(glm::vec3 origin, glm::vec3 dir, glm::vec3 &hit, glm
 	// dir.x = dir2.x;
 	// dir.y = dir2.y;
 	// dir.z = dir2.z;
-	// dir = glm::normalize(dir);
+	// dir = normalize(dir);
 
 
 	for (int i=0; i<3; i++){
 
 		if (i==0){
-			c0 = glm::vec3(1,1,1)*(float)m_size+m_pos;
-			c1 = glm::vec3( 0,1,1)*(float)m_size+m_pos;
-			c2 = glm::vec3(1, 0,1)*(float)m_size+m_pos;
-			normal = glm::vec3(0,0,1);
+			c0 = vec3(1,1,1)*(float)m_size+m_pos;
+			c1 = vec3( 0,1,1)*(float)m_size+m_pos;
+			c2 = vec3(1, 0,1)*(float)m_size+m_pos;
+			normal = vec3(0,0,1);
 		} else if (i==1){
-			c0 = glm::vec3(1, 1, 1)*(float)m_size+m_pos;
-			c1 = glm::vec3( 1,0,1)*(float)m_size+m_pos;
-			c2 = glm::vec3( 1, 1,0)*(float)m_size+m_pos;
-			normal = glm::vec3(1,0,0);
+			c0 = vec3(1, 1, 1)*(float)m_size+m_pos;
+			c1 = vec3( 1,0,1)*(float)m_size+m_pos;
+			c2 = vec3( 1, 1,0)*(float)m_size+m_pos;
+			normal = vec3(1,0,0);
 		} else {
-			c0 = glm::vec3(1, 1, 1)*(float)m_size+m_pos;
-			c1 = glm::vec3( 1,1,0)*(float)m_size+m_pos;
-			c2 = glm::vec3( 0,1,1)*(float)m_size+m_pos;
-			normal = glm::vec3(0,1,0);
+			c0 = vec3(1, 1, 1)*(float)m_size+m_pos;
+			c1 = vec3( 1,1,0)*(float)m_size+m_pos;
+			c2 = vec3( 0,1,1)*(float)m_size+m_pos;
+			normal = vec3(0,1,0);
 		}
 
-		t = glm::dot((c0-origin),normal)/glm::dot(normal,dir);
+		t = dot((c0-origin),normal)/dot(normal,dir);
 		hit = origin + t*dir;
-		u = glm::dot(c1-c0,hit-c0)/(float)m_size;
-		v = glm::dot(c2-c0,hit-c0)/(float)m_size;
+		u = dot(c1-c0,hit-c0)/(float)m_size;
+		v = dot(c2-c0,hit-c0)/(float)m_size;
 		if (u>0.0f & v>0.0f & u<(float)m_size & v<(float)m_size) {
 			if (t0==0.0f){
 				t0 = t;
@@ -255,14 +280,14 @@ float NonhierBox::intersect(glm::vec3 origin, glm::vec3 dir, glm::vec3 &hit, glm
 		}
 
 		normal = -normal;
-		c0 = -c0+2.0f*m_pos+glm::vec3(m_size,m_size,m_size);
-		c1 = -c1+2.0f*m_pos+glm::vec3(m_size,m_size,m_size);
-		c2 = -c2+2.0f*m_pos+glm::vec3(m_size,m_size,m_size);
+		c0 = -c0+2.0f*m_pos+vec3(m_size,m_size,m_size);
+		c1 = -c1+2.0f*m_pos+vec3(m_size,m_size,m_size);
+		c2 = -c2+2.0f*m_pos+vec3(m_size,m_size,m_size);
 
-		t = glm::dot((c0-origin),normal)/glm::dot(normal,dir);
+		t = dot((c0-origin),normal)/dot(normal,dir);
 		hit = origin + t*dir;
-		u = glm::dot(c1-c0,hit-c0)/(float)m_size;
-		v = glm::dot(c2-c0,hit-c0)/(float)m_size;
+		u = dot(c1-c0,hit-c0)/(float)m_size;
+		v = dot(c2-c0,hit-c0)/(float)m_size;
 		if (u>0.0f & v>0.0f & u<(float)m_size & v<(float)m_size) {
 			if (t0==0.0f){
 				t0 = t;
@@ -277,18 +302,18 @@ float NonhierBox::intersect(glm::vec3 origin, glm::vec3 dir, glm::vec3 &hit, glm
 
 	hit = origin + t0*dir;
 
-	hit = glm::vec3(trans * glm::vec4(hit,1.0f));
-	normal0 = glm::vec3(trans * glm::vec4(normal0,0.0f));
+	hit = vec3(trans * vec4(hit,1.0f));
+	normal0 = vec3(trans * vec4(normal0,0.0f));
 	// if (t0>=0){
-	// 	t0 = glm::length(hit-origin);
+	// 	t0 = length(hit-origin);
 	// } else {
-	// 	t0 = -glm::length(hit-origin);
+	// 	t0 = -length(hit-origin);
 	// }
 
 	return t0;
 
 }
-float Cube::intersect(glm::vec3 origin, glm::vec3 dir, glm::vec3 &hit, glm::vec3 &normal0,glm::mat4 trans,glm::mat4 invtrans){
+float Cube::intersect(vec3 origin, vec3 dir, vec3 &hit, vec3 &normal0,mat4 trans,mat4 invtrans){
 
 		float t;
 		float t0=0;
@@ -297,11 +322,11 @@ float Cube::intersect(glm::vec3 origin, glm::vec3 dir, glm::vec3 &hit, glm::vec3
 
 		origin = origin-tol*dir;
 
-		origin = glm::vec3(invtrans * glm::vec4(origin,1.0f));
-		dir = glm::vec3(invtrans * glm::vec4(dir,0.0f));
+		origin = vec3(invtrans * vec4(origin,1.0f));
+		dir = vec3(invtrans * vec4(dir,0.0f));
 
-		// glm::vec4 origin2 = trans * glm::vec4(origin.x,origin.y,origin.z,1.0f);
-		// glm::vec4 dir2 = trans * glm::vec4(dir.x,dir.y,dir.z,0.0f);
+		// vec4 origin2 = trans * vec4(origin.x,origin.y,origin.z,1.0f);
+		// vec4 dir2 = trans * vec4(dir.x,dir.y,dir.z,0.0f);
 		//
 		// origin.x = origin2.x/origin2.w;
 		// origin.y = origin2.y/origin2.w;
@@ -310,42 +335,42 @@ float Cube::intersect(glm::vec3 origin, glm::vec3 dir, glm::vec3 &hit, glm::vec3
 		// dir.x = dir2.x;
 		// dir.y = dir2.y;
 		// dir.z = dir2.z;
-		// dir = glm::normalize(dir);
+		// dir = normalize(dir);
 
-		// std::cout << glm::to_string(trans) << std::endl;
+		// std::cout << to_string(trans) << std::endl;
 
 		for (int i=0; i<3; i++){
 
-			glm::vec3 c0;
-			glm::vec3 c1;
-			glm::vec3 c2;
-			glm::vec3 normal;
+			vec3 c0;
+			vec3 c1;
+			vec3 c2;
+			vec3 normal;
 
 			if (i==0){
-				c0 = glm::vec3( 1,1,1);
-				c1 = glm::vec3( 0,1,1);
-				c2 = glm::vec3( 1,0,1);
-				normal = glm::vec3(0,0,1);
+				c0 = vec3( 1,1,1);
+				c1 = vec3( 0,1,1);
+				c2 = vec3( 1,0,1);
+				normal = vec3(0,0,1);
 			} else if (i==1){
-				c0 = glm::vec3( 1,1,1);
-				c1 = glm::vec3( 1,0,1);
-				c2 = glm::vec3( 1,1,0);
-				normal = glm::vec3(1,0,0);
+				c0 = vec3( 1,1,1);
+				c1 = vec3( 1,0,1);
+				c2 = vec3( 1,1,0);
+				normal = vec3(1,0,0);
 			} else {
-				c0 = glm::vec3(1,1,1);
-				c1 = glm::vec3(1,1,0);
-				c2 = glm::vec3(0,1,1);
-				normal = glm::vec3(0,1,0);
+				c0 = vec3(1,1,1);
+				c1 = vec3(1,1,0);
+				c2 = vec3(0,1,1);
+				normal = vec3(0,1,0);
 			}
 
-			t = glm::dot((c0-origin),normal)/glm::dot(normal,dir);
+			t = dot((c0-origin),normal)/dot(normal,dir);
 			hit = origin + t*dir;
 
-			float m_size1 = glm::length(c1-c0);
-			float m_size2 = glm::length(c2-c0);
+			float m_size1 = length(c1-c0);
+			float m_size2 = length(c2-c0);
 
-			u = glm::dot(c1-c0,hit-c0);
-			v = glm::dot(c2-c0,hit-c0);
+			u = dot(c1-c0,hit-c0);
+			v = dot(c2-c0,hit-c0);
 			if (u>0.0f & v>0.0f & u<1 & v<1) {
 				if (t0==0.0f){
 					t0 = t;
@@ -357,18 +382,18 @@ float Cube::intersect(glm::vec3 origin, glm::vec3 dir, glm::vec3 &hit, glm::vec3
 			}
 
 			normal = -normal;
-			c0 = -c0+glm::vec3(1,1,1);
-			c1 = -c1+glm::vec3(1,1,1);
-			c2 = -c2+glm::vec3(1,1,1);
+			c0 = -c0+vec3(1,1,1);
+			c1 = -c1+vec3(1,1,1);
+			c2 = -c2+vec3(1,1,1);
 
-			t = glm::dot((c0-origin),normal)/glm::dot(normal,dir);
+			t = dot((c0-origin),normal)/dot(normal,dir);
 			hit = origin + t*dir;
 
-			m_size1 = glm::length(c1-c0);
-			m_size2 = glm::length(c2-c0);
+			m_size1 = length(c1-c0);
+			m_size2 = length(c2-c0);
 
-			u = glm::dot(c1-c0,hit-c0);
-			v = glm::dot(c2-c0,hit-c0);
+			u = dot(c1-c0,hit-c0);
+			v = dot(c2-c0,hit-c0);
 			if (u>0.0f & v>0.0f & u<1 & v<1) {
 				if (t0==0.0f){
 					t0 = t;
@@ -383,39 +408,39 @@ float Cube::intersect(glm::vec3 origin, glm::vec3 dir, glm::vec3 &hit, glm::vec3
 
 		hit = origin + t0*dir;
 
-		hit = glm::vec3(trans * glm::vec4(hit,1.0f));
-		normal0 = glm::vec3(trans * glm::vec4(normal0,0.0f));
+		hit = vec3(trans * vec4(hit,1.0f));
+		normal0 = vec3(trans * vec4(normal0,0.0f));
 		// if (t0>=0){
-		// 	t0 = glm::length(hit-origin);
+		// 	t0 = length(hit-origin);
 		// } else {
-		// 	t0 = -glm::length(hit-origin);
+		// 	t0 = -length(hit-origin);
 		// }
 
 		return t0;
 
 }
-float Sphere::intersect(glm::vec3 origin, glm::vec3 dir, glm::vec3 &hit, glm::vec3 &normal,glm::mat4 trans,glm::mat4 invtrans){
+float Sphere::intersect(vec3 origin, vec3 dir, vec3 &hit, vec3 &normal,mat4 trans,mat4 invtrans){
 
-		// glm::vec4 m_posi = trans*glm::vec4(0,0,0,1);
-		// glm::vec3 m_pos = glm::vec3(m_posi.x,m_posi.y,m_posi.z)/m_posi.w;
+		// vec4 m_posi = trans*vec4(0,0,0,1);
+		// vec3 m_pos = vec3(m_posi.x,m_posi.y,m_posi.z)/m_posi.w;
 
 		origin = origin-tol*dir;
 
-		origin = glm::vec3(invtrans * glm::vec4(origin,1.0f));
-		dir = glm::vec3(invtrans * glm::vec4(dir,0.0f));
+		origin = vec3(invtrans * vec4(origin,1.0f));
+		dir = vec3(invtrans * vec4(dir,0.0f));
 
-		glm::vec3 m_pos = glm::vec3(0,0,0);
+		vec3 m_pos = vec3(0,0,0);
 
 		float m_radius = 1;
 
-		double A = (double)glm::dot(dir,dir);
-		double B = (double)2*glm::dot(dir,(origin-m_pos));
-		double C = (double)glm::dot(origin-m_pos,origin-m_pos)-m_radius*m_radius;
+		double A = (double)dot(dir,dir);
+		double B = (double)2*dot(dir,(origin-m_pos));
+		double C = (double)dot(origin-m_pos,origin-m_pos)-m_radius*m_radius;
 
 		double t[2];
 		double t0;
 
-		// std::cout << glm::to_string(trans) << std::endl;
+		// std::cout << to_string(trans) << std::endl;
 
 		quadraticRoots(A, B, C, t);
 
@@ -436,12 +461,12 @@ float Sphere::intersect(glm::vec3 origin, glm::vec3 dir, glm::vec3 &hit, glm::ve
 		hit = origin + (float)t0*dir;
 		normal = (hit-m_pos)/(float)m_radius;
 
-		hit = glm::vec3(trans * glm::vec4(hit,1.0f));
-		normal = glm::vec3(trans * glm::vec4(normal,0.0f));
+		hit = vec3(trans * vec4(hit,1.0f));
+		normal = vec3(trans * vec4(normal,0.0f));
 		// if (t0>=0){
-		// 	t0 = glm::length(hit-origin);
+		// 	t0 = length(hit-origin);
 		// } else {
-		// 	t0 = -glm::length(hit-origin);
+		// 	t0 = -length(hit-origin);
 		// }
 
 		return t0;
