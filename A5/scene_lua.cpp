@@ -46,6 +46,7 @@
 
 #include "Light.hpp"
 #include "Mesh.hpp"
+#include "Quad.hpp"
 #include "GeometryNode.hpp"
 #include "JointNode.hpp"
 #include "Primitive.hpp"
@@ -55,6 +56,9 @@
 
 typedef std::map<std::string,Mesh*> MeshMap;
 static MeshMap mesh_map;
+
+typedef std::map<std::string,Quad*> QuadMap;
+static QuadMap quad_map;
 
 // Uncomment the following line to enable debugging messages
 // #define GRLUA_ENABLE_DEBUG
@@ -326,6 +330,42 @@ int gr_mesh_cmd(lua_State* L)
 	return 1;
 }
 
+// Create a quad node
+extern "C"
+int gr_quad_cmd(lua_State* L)
+{
+	GRLUA_DEBUG_CALL;
+
+	gr_node_ud* data = (gr_node_ud*)lua_newuserdata(L, sizeof(gr_node_ud));
+	data->node = 0;
+
+	const char* name = luaL_checkstring(L, 1);
+	const char* obj_fname = luaL_checkstring(L, 2);
+  int n_cols = luaL_checknumber(L, 3);
+  int n_rows = luaL_checknumber(L, 4);
+
+	std::string sfname(obj_fname);
+
+	// Use a dictionary structure to make sure every quad is loaded
+	// at most once.
+	auto i = quad_map.find(sfname);
+	Quad *quad = nullptr;
+
+	if( i == quad_map.end() ) {
+		quad = new Quad(obj_fname,n_cols, n_rows );
+		quad_map[sfname] = quad;
+	} else {
+		quad = i->second;
+	}
+
+	data->node = new GeometryNode(name, quad);
+
+	luaL_getmetatable(L, "gr.node");
+	lua_setmetatable(L, -2);
+
+	return 1;
+}
+
 // Make a Point light
 extern "C"
 int gr_light_cmd(lua_State* L)
@@ -579,6 +619,7 @@ static const luaL_Reg grlib_functions[] = {
   // new for assign 5
   {"cone", gr_cone_cmd},
   {"cylinder", gr_cylinder_cmd},
+  {"quad", gr_quad_cmd},
   {0, 0}
 };
 

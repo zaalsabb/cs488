@@ -24,10 +24,14 @@ Perlin::~Perlin() {
 // 	return a1 + t*(a2-a1);
 // }
 
-float Perlin::noise_function(float x, float y){
-	int x_i = (int)std::max(std::floor(x * 255),1);
-	int y_i = (int)std::max(std::floor(y * 255),1);
+float Perlin::noise_normal(float x, float y, int sx, int sy, glm::vec3 &normal){
+	int x_i = (int)std::floor(x/(float)sx * 255);
+	int y_i = (int)std::floor(y/(float)sy * 255);
+
+	// std::cout << x << std::endl;
+	float p = (float)seed[x_i + y_i] / 256.0f * m_noise;
 	
-	return (float)seed[x_i + y_i] / m_noise;
+	return p;
 
 }
+

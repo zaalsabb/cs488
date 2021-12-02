@@ -100,7 +100,6 @@ float Mesh::intersect(glm::vec3 origin, glm::vec3 dir, glm::vec3 &hit, glm::vec3
 
 		u = glm::dot(c1-c0,hit-c0)/glm::dot(c1-c0,c1-c0);
 		v = glm::dot(c2-c0,hit-c0)/glm::dot(c2-c0,c2-c0);
-		t = t + perlin.noise_function(u,v);
 		
 		if (SameSide(hit,c0, c1,c2) & SameSide(hit,c1, c0,c2)
 				& SameSide(hit,c2, c0,c1)) {

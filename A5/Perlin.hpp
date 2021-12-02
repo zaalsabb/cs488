@@ -12,7 +12,7 @@ public:
 
     virtual ~Perlin();
     void random();
-    float noise_function(float x, float y);
+    float noise_normal(float x, float y, int sx, int sy, glm::vec3 &normal);
 private:
 	float m_noise;
     int seed[512] = {128, 152, 248, 243, 171,  69, 247,  43, 130, 200, 149, 188,   0,
