@@ -1,14 +1,15 @@
-#include <stdint.h>
-
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+#include "Image.hpp"
 #include <iostream>
 
-// A polygonal mesh.
-class Texture : public Texture {
+class Texture {
 public:
+  virtual ~Texture();
   Texture( const std::string& fname );
-  ~Texture();
-  uint8_t* image;
+  Texture();
+  void LoadImage();
+  Image image;
+
+private:
+  std::string m_fname;
 
 };

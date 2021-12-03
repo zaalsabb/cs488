@@ -43,6 +43,7 @@ public:
 	// Save this image into the PNG file with name 'filename'.
 	// Warning: If 'filename' already exists, it will be overwritten.
 	bool savePng(const std::string & filename) const;
+	bool loadPng(const std::string & filename);
 
 	const double * data() const;
 	double * data();

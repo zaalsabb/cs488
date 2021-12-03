@@ -47,6 +47,8 @@
 #include "Light.hpp"
 #include "Mesh.hpp"
 #include "Quad.hpp"
+#include "Texture.hpp"
+
 #include "GeometryNode.hpp"
 #include "JointNode.hpp"
 #include "Primitive.hpp"
@@ -100,6 +102,10 @@ struct gr_material_ud {
 // allocated by Lua to represent lights.
 struct gr_light_ud {
   Light* light;
+};
+
+struct gr_texture_ud {
+  Texture* texture;
 };
 
 // Useful function to retrieve and check an n-tuple of numbers.
@@ -466,6 +472,21 @@ int gr_material_cmd(lua_State* L)
   return 1;
 }
 
+// Create a Texture
+extern "C"
+int gr_texture_cmd(lua_State* L)
+{
+  GRLUA_DEBUG_CALL;
+
+  gr_texture_ud* data = (gr_texture_ud*)lua_newuserdata(L, sizeof(gr_texture_ud));
+  data->texture = new Texture(luaL_checkstring(L, 1));
+
+  luaL_newmetatable(L, "gr.texture");
+  lua_setmetatable(L, -2);
+
+  return 1;
+}
+
 // Add a Child to a node
 extern "C"
 int gr_node_add_child_cmd(lua_State* L)
@@ -616,10 +637,11 @@ static const luaL_Reg grlib_functions[] = {
   {"mesh", gr_mesh_cmd},
   {"light", gr_light_cmd},
   {"render", gr_render_cmd},
-  // new for assign 5
+  // new for project
   {"cone", gr_cone_cmd},
   {"cylinder", gr_cylinder_cmd},
   {"quad", gr_quad_cmd},
+  {"texture", gr_texture_cmd},
   {0, 0}
 };
 

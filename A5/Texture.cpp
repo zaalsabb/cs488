@@ -2,14 +2,14 @@
 
 
 //---------------------------------------------------------------------------------------
-Texture::Texture(const std::string& fname )
+Texture::Texture(const std::string& fname ) : m_fname(fname)
 {
-    // Load the texture
-    int w, h, nch;
-    image = stbi_load("image.png", &w, &h, &nch, 3);
+    // image.loadPng(fname);
 }
-
 //---------------------------------------------------------------------------------------
 Texture::~Texture() {
-    stbi_image_free(image);
+}
+
+void Texture::LoadImage(){
+  image.loadPng(m_fname);
 }
