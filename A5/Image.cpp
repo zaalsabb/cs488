@@ -132,7 +132,7 @@ bool Image::savePng(const std::string & filename) const
 //---------------------------------------------------------------------------------------
 bool Image::loadPng(const std::string & filename)
 {
-	
+
 	std::vector<unsigned char> image;
 
     // decode the image file
@@ -153,7 +153,7 @@ bool Image::loadPng(const std::string & filename)
 		for (uint x(0); x < m_width; x++) {
 			for (uint i(0); i < m_colorComponents; ++i) {
 				color = image[m_colorComponents * (m_width * y + x) + i];
-        		m_data[m_colorComponents * (m_width * y + x) + i] = (unsigned char)((double)color)/255.0f;
+        m_data[m_colorComponents * (m_width * y + x) + i] = ((double)color)/255.0f;
 			}
 		}
 	}

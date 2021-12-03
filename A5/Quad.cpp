@@ -81,7 +81,7 @@ float Quad::intersect(vec3 origin, vec3 dir, Hit &hit,mat4 trans,mat4 invtrans){
 	C0 = vec3(C0i.x,C0i.y,C0i.z)/C0i.w;
 	C1 = vec3(C1i.x,C1i.y,C1i.z)/C1i.w;
 	C2 = vec3(C2i.x,C2i.y,C2i.z)/C2i.w;
-	C3 = vec3(C3i.x,C3i.y,C3i.z)/C3i.w;	
+	C3 = vec3(C3i.x,C3i.y,C3i.z)/C3i.w;
 
 	for (int i=0; i<m_faces.size(); i++){
 
@@ -117,7 +117,7 @@ float Quad::intersect(vec3 origin, vec3 dir, Hit &hit,mat4 trans,mat4 invtrans){
 		// c0 = c0 + normal*perlin.noise_function(U1,V1,m_rows,m_cols);
 		// c1 = c1 + normal*perlin.noise_function(U2,V2,m_rows,m_cols);
 		// c2 = c2 + normal*perlin.noise_function(U3,V3,m_rows,m_cols);
-		// c3 = c3 + normal*perlin.noise_function(U4,V4,m_rows,m_cols);		
+		// c3 = c3 + normal*perlin.noise_function(U4,V4,m_rows,m_cols);
 
 		t = dot((c0-origin),normal)/dot(normal,dir);
 		hit_pos = origin + t*dir;
@@ -132,32 +132,32 @@ float Quad::intersect(vec3 origin, vec3 dir, Hit &hit,mat4 trans,mat4 invtrans){
 			if (t0==0.0f){
 				t0 = t;
 				normal0 = normal;
-				checkSubdivision(hit_pos,C0, C1, C2, U, V);
+				checkSubdivision(hit_pos,C0, C1, C3, V, U);
 			} else if (t<t0) {
 				t0 = t;
 				normal0 = normal;
-				checkSubdivision(hit_pos,C0, C1, C2, U, V);
+				checkSubdivision(hit_pos,C0, C1, C3, V, U);
 			}
 		} else if (checkSubdivision(hit_pos,c0, c2, c3, u2, v2)) {
 			if (t0==0.0f){
 				t0 = t;
 				normal0 = normal;
-				checkSubdivision(hit_pos,C0, C1, C2, U, V);
+				checkSubdivision(hit_pos,C0, C1, C3, V, U);
 			} else if (t<t0) {
 				t0 = t;
 				normal0 = normal;
-				checkSubdivision(hit_pos,C0, C1, C2, U, V);
+				checkSubdivision(hit_pos,C0, C1, C3, V, U);
 			}
 		}
 	}
-	
+
 	hit_pos = origin + t0*dir;
 	// perlin.noise_normal(U,V,m_rows,m_cols,normal0);
 	hit.pos = hit_pos;
 	hit.normal = normal0;
 
-	hit.U = U/(float)m_cols;
-	hit.V = V/(float)m_rows;
+	hit.U = U;
+	hit.V = V;
 
 	return t0;
 }
@@ -166,7 +166,7 @@ bool Quad::checkSubdivision(vec3 hit_pos, vec3 c0, vec3 c1, vec3 c2, float &u, f
 
 	u = dot(c1-c0,hit_pos-c0)/dot(c1-c0,c1-c0);
 	v = dot(c2-c0,hit_pos-c0)/dot(c2-c0,c2-c0);
-	
+
 	return SameSide(hit_pos,c0, c1,c2) & SameSide(hit_pos,c1, c0,c2) & SameSide(hit_pos,c2, c0,c1);
 }
 

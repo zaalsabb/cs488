@@ -12,7 +12,7 @@
 float N_SOLID = 6.0;
 int MAX_RECURSION_DEPTH = 1;
 bool SHADOWS_ON = true;
-bool 	REFLECTIONS_ON = false;
+bool 	REFLECTIONS_ON = true;
 
 //constants
 float PI = 3.1415;
@@ -102,6 +102,29 @@ void A5_Render(
 
 		}
 	}
+	const GeometryNode * geometryNode;
+
+	for (SceneNode * node : root->children) {
+		if (node->m_nodeType == NodeType::GeometryNode){
+			geometryNode = static_cast<const GeometryNode *>(node);
+			if (geometryNode->m_texture != nullptr){
+
+				for (uint y = 0; y < h; ++y) {
+					for (uint x = 0; x < w; ++x) {
+
+						// Red:
+						image(x, y, 0) = (double)geometryNode->m_texture->getColor(x,y).x;
+						// Green:
+						image(x, y, 1) = (double)geometryNode->m_texture->getColor(x,y).y;
+						// Blue:
+						image(x, y, 2) = (double)geometryNode->m_texture->getColor(x,y).z;
+
+					}
+				}
+			}
+
+		}
+	}
 	std::cout <<" -> Rendering Finished!"<< '\n';
 }
 
@@ -182,18 +205,19 @@ void rayIntersection(SceneNode * root, glm::vec3 origin, glm::vec3 dir,Hit &hit)
 		if (node->m_nodeType == NodeType::GeometryNode){
 			geometryNode = static_cast<const GeometryNode *>(node);
 			t = geometryNode->m_primitive->intersect(origin,dir,hit_temp,node->trans,node->invtrans);
-			hit_temp.t = t;
 			if (t > 2*tol){
 				if (hit.t == 0.0f | t < hit.t ) {
-					hit=hit_temp;
+					hit.t = t;
+					hit.copy(hit_temp);
 					PhongMaterial * mat = static_cast<PhongMaterial*>(geometryNode->m_material);
 					hit.mat.m_ks = mat->m_ks;
 					hit.mat.m_shininess = mat->m_shininess;
 					if (geometryNode->m_texture != nullptr){
-						hit.U = hit.U*(float)geometryNode->m_texture->image->width();
+						hit.U = hit.U*(float)geometryNode->m_texture->image->width()/5;
 						hit.V = hit.V*(float)geometryNode->m_texture->image->height();
-						hit.mat.m_kd = geometryNode->m_texture->getColor((int)hit.U,(int)hit.V);
-						// std::cout << to_string(hit.mat.m_kd) << std::endl;
+						// std::cout << hit.U << std::endl;
+						hit.mat.m_kd = geometryNode->m_texture->getColor((uint)hit.U,(uint)hit.V);
+						hit.mat.m_ks=glm::vec3(0,0,0);
 
 					} else {
 						hit.mat.m_kd = mat->m_kd;
@@ -203,7 +227,8 @@ void rayIntersection(SceneNode * root, glm::vec3 origin, glm::vec3 dir,Hit &hit)
 		}
 		rayIntersection(node,origin,dir,hit_temp);
 		if (hit.t==0 | (hit_temp.t>0 & hit_temp.t < hit.t)){
-			hit = hit_temp;
+			// hit = hit_temp;
+			hit.copy(hit_temp);
 		}
 	}
 }
@@ -235,7 +260,7 @@ void LoadTextures(SceneNode * root){
 			geometryNode = static_cast<const GeometryNode *>(node);
 			if (geometryNode->m_texture != nullptr){
 				geometryNode->m_texture->loadTexture();
-			}			
+			}
 			LoadTextures(node);
 		}
 	}

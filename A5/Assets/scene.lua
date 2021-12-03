@@ -6,14 +6,14 @@ mat3 = gr.material({1.0, 0.6, 0.1}, {0.5, 0.7, 0.5}, 25)
 
 scene_root = gr.node('root')
 
-t = gr.texture("test2.png")
+t = gr.texture("test.png")
 
 -- s1 = gr.cylinder('s1', {0, -200, 100}, 100, 100)
 -- scene_root:add_child(s1)
 -- s1:set_material(mat1)
 -- -- s1:set_texture(t)
 
-wall = gr.quad( 'wall', 'surface2.obj',10,10 )
+wall = gr.quad( 'wall', 'surface.obj',1,1 )
 wall:set_material(mat3)
 wall:set_texture(t)
 wall:scale(200, 200, 200)
