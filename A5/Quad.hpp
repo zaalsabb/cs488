@@ -36,7 +36,7 @@ class Quad : public Primitive {
 public:
   Quad( const std::string& fname, double n_cols, double n_rows);
   Perlin perlin = Perlin(1.0f);
-  virtual float intersect(vec3 origin, vec3 dir, vec3 &hit, vec3 &normal,mat4 trans,mat4 invtrans);
+  virtual float intersect(vec3 origin, vec3 dir, Hit &hit,mat4 trans,mat4 invtrans);
 	virtual bool SameSide(vec3 p1,vec3 p2,vec3 a,vec3 b);
 	virtual void TransformCoordinates(mat4 trans);
 	virtual bool checkSubdivision(vec3 hit, vec3 c0, vec3 c1, vec3 c2, float &u, float &v);

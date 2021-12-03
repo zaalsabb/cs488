@@ -25,3 +25,8 @@ void GeometryNode::setMaterial( Material *mat )
 
 	m_material = mat;
 }
+
+void GeometryNode::setTexture( Texture *texture )
+{
+	m_texture = texture;
+}

@@ -40,6 +40,8 @@ public:
 	// Retrieve a particular component from the image.
 	double & operator()(uint x, uint y, uint i);
 
+	double getPixelValue(uint x, uint y, uint i);
+
 	// Save this image into the PNG file with name 'filename'.
 	// Warning: If 'filename' already exists, it will be overwritten.
 	bool savePng(const std::string & filename) const;

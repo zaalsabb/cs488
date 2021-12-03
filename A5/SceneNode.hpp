@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Material.hpp"
+// #include "GeometryNode.hpp"
 
 #include <glm/glm.hpp>
 
@@ -39,9 +40,9 @@ public:
     void scale(const glm::vec3& amount);
     void translate(const glm::vec3& amount);
 
-		void BuildHierarchyGraph();
-		void ApplyScales();
-		void ApplyTransform();
+	void BuildHierarchyGraph();
+	void ApplyScales();
+	void ApplyTransform();
 
 	friend std::ostream & operator << (std::ostream & os, const SceneNode & node);
 

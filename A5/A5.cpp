@@ -40,6 +40,9 @@ void A5_Render(
 	// root->ApplyTransform();
 	root->ApplyScales();
 
+	LoadTextures(root);
+
+
   glm::vec3 wi = glm::normalize(eye - view);
   glm::vec3 ui = glm::normalize(glm::cross(up,wi));
   glm::vec3 vi = glm::cross(wi,ui);
@@ -129,13 +132,13 @@ glm::vec3 shade(SceneNode * root,
 			Hit shadow;
 			rayIntersection(root, hit.pos, l, shadow);
 			if (shadow.t==0 | !SHADOWS_ON){
-				// std::cout << glm::dot(l,hit.n) << std::endl;
+				// std::cout << glm::dot(l,hit.normal) << std::endl;
 				//diffuse lighting
-				L = L + I*hit.mat.m_kd*std::max(0.0f,glm::dot(l,hit.n));
+				L = L + I*hit.mat.m_kd*std::max(0.0f,glm::dot(l,hit.normal));
 
 				//specular Lighting
 				glm::vec3 h = glm::normalize(l-dir);
-				L = L + I*hit.mat.m_ks*pow(std::max(0.0f,glm::dot(h,hit.n)),p);
+				L = L + I*hit.mat.m_ks*pow(std::max(0.0f,glm::dot(h,hit.normal)),p);
 				//std::cout << glm::to_string(n) << std::endl;
 			} else {
 				// std::cout << "shadow" << std::endl;
@@ -146,7 +149,7 @@ glm::vec3 shade(SceneNode * root,
 			float n1;
 			float n2;
 
-			if (glm::dot(dir,hit.n) < 0){
+			if (glm::dot(dir,hit.normal) < 0){
 				n1 = 1.0f;
 				n2 = N_SOLID;
 			} else {
@@ -155,7 +158,7 @@ glm::vec3 shade(SceneNode * root,
 			}
 
 			glm::vec3 T;
-			float F = Fresnel(n1,n2,dir,T,hit.n);
+			float F = Fresnel(n1,n2,dir,T,hit.normal);
 
 			//std::cout << F << std::endl;
 			glm::vec3 refl = hit.mat.m_ks*F*shade(root, hit.pos, R, ambient, lights, recursionDepth+1);
@@ -169,8 +172,7 @@ glm::vec3 shade(SceneNode * root,
 }
 
 void rayIntersection(SceneNode * root, glm::vec3 origin, glm::vec3 dir,Hit &hit){
-	glm::vec3 normal;
-	glm::vec3 hit_pos;
+	Hit hit_temp;
 	float t;
 	float tol = 0.01f;
 
@@ -179,24 +181,29 @@ void rayIntersection(SceneNode * root, glm::vec3 origin, glm::vec3 dir,Hit &hit)
 	for (SceneNode * node : root->children) {
 		if (node->m_nodeType == NodeType::GeometryNode){
 			geometryNode = static_cast<const GeometryNode *>(node);
-			t = geometryNode->m_primitive->intersect(origin,dir,hit_pos,normal,node->trans,node->invtrans);
-			// std::cout << t << std::endl;
+			t = geometryNode->m_primitive->intersect(origin,dir,hit_temp,node->trans,node->invtrans);
+			hit_temp.t = t;
 			if (t > 2*tol){
 				if (hit.t == 0.0f | t < hit.t ) {
-					hit.t = t;
-					hit.pos=hit_pos;
-					hit.n=normal;
+					hit=hit_temp;
 					PhongMaterial * mat = static_cast<PhongMaterial*>(geometryNode->m_material);
 					hit.mat.m_ks = mat->m_ks;
-					hit.mat.m_kd = mat->m_kd;
 					hit.mat.m_shininess = mat->m_shininess;
+					if (geometryNode->m_texture != nullptr){
+						hit.U = hit.U*(float)geometryNode->m_texture->image->width();
+						hit.V = hit.V*(float)geometryNode->m_texture->image->height();
+						hit.mat.m_kd = geometryNode->m_texture->getColor((int)hit.U,(int)hit.V);
+						// std::cout << to_string(hit.mat.m_kd) << std::endl;
+
+					} else {
+						hit.mat.m_kd = mat->m_kd;
+					}
 				}
 			}
 		}
-		Hit hit2;
-		rayIntersection(node,origin,dir,hit2);
-		if (hit.t==0 | (hit2.t>0 & hit2.t < hit.t)){
-			hit = hit2;
+		rayIntersection(node,origin,dir,hit_temp);
+		if (hit.t==0 | (hit_temp.t>0 & hit_temp.t < hit.t)){
+			hit = hit_temp;
 		}
 	}
 }
@@ -217,5 +224,19 @@ float Fresnel(float n1,float n2,glm::vec3 V,glm::vec3 &T, glm::vec3 N){
 		return 0.5f*(ps*ps + pt*pt);
 	} else {
 		return 1.0f;
+	}
+}
+
+void LoadTextures(SceneNode * root){
+	const GeometryNode * geometryNode;
+
+	for (SceneNode * node : root->children) {
+		if (node->m_nodeType == NodeType::GeometryNode){
+			geometryNode = static_cast<const GeometryNode *>(node);
+			if (geometryNode->m_texture != nullptr){
+				geometryNode->m_texture->loadTexture();
+			}			
+			LoadTextures(node);
+		}
 	}
 }

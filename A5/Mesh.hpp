@@ -13,6 +13,7 @@
 // bounding boxes around your mesh objects. Uncomment this option
 // to turn it on.
 //#define RENDER_BOUNDING_VOLUMES
+using namespace glm;
 
 struct Triangle
 {
@@ -31,12 +32,12 @@ struct Triangle
 class Mesh : public Primitive {
 public:
   Mesh( const std::string& fname );
-  virtual float intersect(glm::vec3 origin, glm::vec3 dir, glm::vec3 &hit, glm::vec3 &normal,glm::mat4 trans,glm::mat4 invtrans);
-	virtual bool SameSide(glm::vec3 p1,glm::vec3 p2,glm::vec3 a,glm::vec3 b);
-	virtual void TransformCoordinates(glm::mat4 trans);
+  virtual float intersect(vec3 origin, vec3 dir, Hit &hit,mat4 trans,mat4 invtrans);
+	virtual bool SameSide(vec3 p1,vec3 p2,vec3 a,vec3 b);
+	virtual void TransformCoordinates(mat4 trans);
 
 private:
-	std::vector<glm::vec3> m_vertices;
+	std::vector<vec3> m_vertices;
 	std::vector<Triangle> m_faces;
 
     friend std::ostream& operator<<(std::ostream& out, const Mesh& mesh);

@@ -83,6 +83,12 @@ double Image::operator()(uint x, uint y, uint i) const
 }
 
 //---------------------------------------------------------------------------------------
+double Image::getPixelValue(uint x, uint y, uint i)
+{
+  return m_data[m_colorComponents * (m_width * y + x) + i];
+}
+
+//---------------------------------------------------------------------------------------
 double & Image::operator()(uint x, uint y, uint i)
 {
   return m_data[m_colorComponents * (m_width * y + x) + i];
@@ -126,13 +132,19 @@ bool Image::savePng(const std::string & filename) const
 //---------------------------------------------------------------------------------------
 bool Image::loadPng(const std::string & filename)
 {
+	
 	std::vector<unsigned char> image;
 
-  // Decode the image
+    // decode the image file
 	unsigned error = lodepng::decode(image, m_width, m_height, filename);
 
+	// assign memory to store image data
+	size_t numElements = m_width * m_height * m_colorComponents;
+	m_data = new double[numElements];
+	memset(m_data, 0, numElements*sizeof(double));
+
 	if(error) {
-		std::cerr << "encoder error " << error << ": " << lodepng_error_text(error)
+		std::cerr << "decoder error " << error << ": " << lodepng_error_text(error)
 				<< std::endl;
 	}
 
@@ -141,7 +153,7 @@ bool Image::loadPng(const std::string & filename)
 		for (uint x(0); x < m_width; x++) {
 			for (uint i(0); i < m_colorComponents; ++i) {
 				color = image[m_colorComponents * (m_width * y + x) + i];
-        m_data[m_colorComponents * (m_width * y + x) + i] = (unsigned char)((double)color)/255.0f;
+        		m_data[m_colorComponents * (m_width * y + x) + i] = (unsigned char)((double)color)/255.0f;
 			}
 		}
 	}

@@ -1,15 +1,15 @@
+#pragma once
 #include "Image.hpp"
 #include <iostream>
+#include <glm/glm.hpp>
 
 class Texture {
 public:
   virtual ~Texture();
   Texture( const std::string& fname );
-  Texture();
-  void LoadImage();
-  Image image;
+  void loadTexture();
+  glm::vec3 getColor(int x, int y);
 
-private:
-  std::string m_fname;
-
+  Image *image = new Image();
+  std::string m_fname = "";  
 };

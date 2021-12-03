@@ -35,7 +35,10 @@ NonhierBox::~NonhierBox()
 {
 }
 
-float NonhierSphere::intersect(vec3 origin, vec3 dir, vec3 &hit, vec3 &normal,mat4 trans,mat4 invtrans){
+float NonhierSphere::intersect(vec3 origin, vec3 dir, Hit &hit,mat4 trans,mat4 invtrans){
+
+	vec3 hit_pos;
+	vec3 normal;
 
 	origin = origin-tol*dir;
 
@@ -66,24 +69,28 @@ float NonhierSphere::intersect(vec3 origin, vec3 dir, vec3 &hit, vec3 &normal,ma
 
 		t0 = 0;
 	}
-	hit = origin + (float)t0*dir;
-	normal = (hit-m_pos)/(float)m_radius;
+	hit_pos = origin + (float)t0*dir;
+	normal = (hit_pos-m_pos)/(float)m_radius;
 
-	hit = vec3(trans * vec4(hit,1.0f));
+	hit_pos = vec3(trans * vec4(hit_pos,1.0f));
 	normal = vec3(trans * vec4(normal,0.0f));
 	// if (t0>=0){
-	// 	t0 = length(hit-origin);
+	// 	t0 = length(hit_pos-origin);
 	// } else {
-	// 	t0 = -length(hit-origin);
+	// 	t0 = -length(hit_pos-origin);
 	// }
+	hit.pos = hit_pos;
+	hit.normal = normal;
 
 	return t0;
 
 }
 
-float Cone::intersect(vec3 origin, vec3 dir, vec3 &hit, vec3 &normal,mat4 trans,mat4 invtrans){
+float Cone::intersect(vec3 origin, vec3 dir, Hit &hit,mat4 trans,mat4 invtrans){
 
 	//std::cout << m_height << std::endl;
+	vec3 hit_pos;
+	vec3 normal;
 
 	origin = origin-tol*dir;
 
@@ -118,30 +125,34 @@ float Cone::intersect(vec3 origin, vec3 dir, vec3 &hit, vec3 &normal,mat4 trans,
 		t0 = 0;
 	}
 
-	vec3 hit0 = origin + (float)t0*dir;
-	if (hit0[1]-m_pos[1]>0 | hit0[1]-m_pos[1]<-m_height){
+	vec3 hit_pos0 = origin + (float)t0*dir;
+	if (hit_pos0[1]-m_pos[1]>0 | hit_pos0[1]-m_pos[1]<-m_height){
 		return 0;
 	}
 
-	hit = hit0;
-	vec3 n2 = cross(hit-origin,hit-m_pos);
-	normal = normalize(cross(n2,hit-m_pos));
+	hit_pos = hit_pos0;
+	vec3 n2 = cross(hit_pos-origin,hit_pos-m_pos);
+	normal = normalize(cross(n2,hit_pos-m_pos));
 
-	hit = vec3(trans * vec4(hit,1.0f));
+	hit_pos = vec3(trans * vec4(hit_pos,1.0f));
 	normal = vec3(trans * vec4(normal,0.0f));
 	// if (t0>=0){
-	// 	t0 = length(hit-origin);
+	// 	t0 = length(hit_pos-origin);
 	// } else {
-	// 	t0 = -length(hit-origin);
+	// 	t0 = -length(hit_pos-origin);
 	// }
+	hit.pos = hit_pos;
+	hit.normal = normal;	
 	return t0;
 
 }
 
 
-float Cylinder::intersect(vec3 origin, vec3 dir, vec3 &hit, vec3 &normal,mat4 trans,mat4 invtrans){
+float Cylinder::intersect(vec3 origin, vec3 dir, Hit &hit,mat4 trans,mat4 invtrans){
 
 	//std::cout << m_height << std::endl;
+	vec3 hit_pos;
+	vec3 normal;
 
 	origin = origin-tol*dir;
 
@@ -176,49 +187,51 @@ float Cylinder::intersect(vec3 origin, vec3 dir, vec3 &hit, vec3 &normal,mat4 tr
 		t0 = 0;
 	}
 
-	vec3 hit0 = origin + (float)t0*dir;
+	vec3 hit_pos0 = origin + (float)t0*dir;
 	vec3 normal0;
-	if (hit0[1]-m_pos[1]<0){
+	if (hit_pos0[1]-m_pos[1]<0){
 		vec3 p = m_pos;
 		normal0 = vec3(0,-1,0);
 		t0 = dot((p-origin),normal0)/dot(normal0,dir);
-		hit0 = origin + (float)t0*dir;
-		if (length(vec2(hit0[0],hit0[2])-vec2(p[0],p[2]))<m_radius){
-			hit = hit0;
+		hit_pos0 = origin + (float)t0*dir;
+		if (length(vec2(hit_pos0[0],hit_pos0[2])-vec2(p[0],p[2]))<m_radius){
+			hit_pos = hit_pos0;
 			normal = normal0;
 		} else {
 			return 0;
 		}
-	} else if (hit0[1]-m_pos[1]>m_height){
+	} else if (hit_pos0[1]-m_pos[1]>m_height){
 		vec3 p = m_pos+vec3(0,m_height,0);
 		normal0 = vec3(0,1,0);
 		t0 = dot((p-origin),normal0)/dot(normal0,dir);
-		hit0 = origin + (float)t0*dir;
-		if (length(vec2(hit0[0],hit0[2])-vec2(p[0],p[2]))<m_radius){
-			hit = hit0;
+		hit_pos0 = origin + (float)t0*dir;
+		if (length(vec2(hit_pos0[0],hit_pos0[2])-vec2(p[0],p[2]))<m_radius){
+			hit_pos = hit_pos0;
 			normal = normal0;
 		} else {
 			return 0;
 		}
 		
 	} else {
-		hit = hit0;
-		normal = normalize(hit - vec3(m_pos[0],hit[1],m_pos[2]));
+		hit_pos = hit_pos0;
+		normal = normalize(hit_pos - vec3(m_pos[0],hit_pos[1],m_pos[2]));
 	}
 	
-	hit = vec3(trans * vec4(hit,1.0f));
+	hit_pos = vec3(trans * vec4(hit_pos,1.0f));
 	normal = vec3(trans * vec4(normal,0.0f));
 	// if (t0>=0){
-	// 	t0 = length(hit-origin);
+	// 	t0 = length(hit_pos-origin);
 	// } else {
-	// 	t0 = -length(hit-origin);
+	// 	t0 = -length(hit_pos-origin);
 	// }
+	hit.pos = hit_pos;
+	hit.normal = normal;	
 	return t0;
 
 }
 
 
-float NonhierBox::intersect(vec3 origin, vec3 dir, vec3 &hit, vec3 &normal0,mat4 trans,mat4 invtrans){
+float NonhierBox::intersect(vec3 origin, vec3 dir, Hit &hit,mat4 trans,mat4 invtrans){
 
 	float t;
 	float t0=0;
@@ -228,6 +241,8 @@ float NonhierBox::intersect(vec3 origin, vec3 dir, vec3 &hit, vec3 &normal0,mat4
 	vec3 c1;
 	vec3 c2;
 	vec3 normal;
+	vec3 hit_pos;
+	vec3 normal0;
 
 	origin = origin-tol*dir;
 
@@ -266,9 +281,9 @@ float NonhierBox::intersect(vec3 origin, vec3 dir, vec3 &hit, vec3 &normal0,mat4
 		}
 
 		t = dot((c0-origin),normal)/dot(normal,dir);
-		hit = origin + t*dir;
-		u = dot(c1-c0,hit-c0)/(float)m_size;
-		v = dot(c2-c0,hit-c0)/(float)m_size;
+		hit_pos = origin + t*dir;
+		u = dot(c1-c0,hit_pos-c0)/(float)m_size;
+		v = dot(c2-c0,hit_pos-c0)/(float)m_size;
 		if (u>0.0f & v>0.0f & u<(float)m_size & v<(float)m_size) {
 			if (t0==0.0f){
 				t0 = t;
@@ -285,9 +300,9 @@ float NonhierBox::intersect(vec3 origin, vec3 dir, vec3 &hit, vec3 &normal0,mat4
 		c2 = -c2+2.0f*m_pos+vec3(m_size,m_size,m_size);
 
 		t = dot((c0-origin),normal)/dot(normal,dir);
-		hit = origin + t*dir;
-		u = dot(c1-c0,hit-c0)/(float)m_size;
-		v = dot(c2-c0,hit-c0)/(float)m_size;
+		hit_pos = origin + t*dir;
+		u = dot(c1-c0,hit_pos-c0)/(float)m_size;
+		v = dot(c2-c0,hit_pos-c0)/(float)m_size;
 		if (u>0.0f & v>0.0f & u<(float)m_size & v<(float)m_size) {
 			if (t0==0.0f){
 				t0 = t;
@@ -300,25 +315,28 @@ float NonhierBox::intersect(vec3 origin, vec3 dir, vec3 &hit, vec3 &normal0,mat4
 
 	}
 
-	hit = origin + t0*dir;
+	hit_pos = origin + t0*dir;
 
-	hit = vec3(trans * vec4(hit,1.0f));
+	hit_pos = vec3(trans * vec4(hit_pos,1.0f));
 	normal0 = vec3(trans * vec4(normal0,0.0f));
 	// if (t0>=0){
-	// 	t0 = length(hit-origin);
+	// 	t0 = length(hit_pos-origin);
 	// } else {
-	// 	t0 = -length(hit-origin);
+	// 	t0 = -length(hit_pos-origin);
 	// }
-
+	hit.pos = hit_pos;
+	hit.normal = normal0;
 	return t0;
 
 }
-float Cube::intersect(vec3 origin, vec3 dir, vec3 &hit, vec3 &normal0,mat4 trans,mat4 invtrans){
+float Cube::intersect(vec3 origin, vec3 dir, Hit &hit,mat4 trans,mat4 invtrans){
 
 		float t;
 		float t0=0;
 		float u;
 		float v;
+		vec3 hit_pos;
+		vec3 normal0;
 
 		origin = origin-tol*dir;
 
@@ -364,13 +382,13 @@ float Cube::intersect(vec3 origin, vec3 dir, vec3 &hit, vec3 &normal0,mat4 trans
 			}
 
 			t = dot((c0-origin),normal)/dot(normal,dir);
-			hit = origin + t*dir;
+			hit_pos = origin + t*dir;
 
 			float m_size1 = length(c1-c0);
 			float m_size2 = length(c2-c0);
 
-			u = dot(c1-c0,hit-c0);
-			v = dot(c2-c0,hit-c0);
+			u = dot(c1-c0,hit_pos-c0);
+			v = dot(c2-c0,hit_pos-c0);
 			if (u>0.0f & v>0.0f & u<1 & v<1) {
 				if (t0==0.0f){
 					t0 = t;
@@ -387,13 +405,13 @@ float Cube::intersect(vec3 origin, vec3 dir, vec3 &hit, vec3 &normal0,mat4 trans
 			c2 = -c2+vec3(1,1,1);
 
 			t = dot((c0-origin),normal)/dot(normal,dir);
-			hit = origin + t*dir;
+			hit_pos = origin + t*dir;
 
 			m_size1 = length(c1-c0);
 			m_size2 = length(c2-c0);
 
-			u = dot(c1-c0,hit-c0);
-			v = dot(c2-c0,hit-c0);
+			u = dot(c1-c0,hit_pos-c0);
+			v = dot(c2-c0,hit_pos-c0);
 			if (u>0.0f & v>0.0f & u<1 & v<1) {
 				if (t0==0.0f){
 					t0 = t;
@@ -406,23 +424,26 @@ float Cube::intersect(vec3 origin, vec3 dir, vec3 &hit, vec3 &normal0,mat4 trans
 
 		}
 
-		hit = origin + t0*dir;
+		hit_pos = origin + t0*dir;
 
-		hit = vec3(trans * vec4(hit,1.0f));
+		hit_pos = vec3(trans * vec4(hit_pos,1.0f));
 		normal0 = vec3(trans * vec4(normal0,0.0f));
 		// if (t0>=0){
-		// 	t0 = length(hit-origin);
+		// 	t0 = length(hit_pos-origin);
 		// } else {
-		// 	t0 = -length(hit-origin);
+		// 	t0 = -length(hit_pos-origin);
 		// }
-
+		hit.pos = hit_pos;
+		hit.normal = normal0;
 		return t0;
 
 }
-float Sphere::intersect(vec3 origin, vec3 dir, vec3 &hit, vec3 &normal,mat4 trans,mat4 invtrans){
+float Sphere::intersect(vec3 origin, vec3 dir, Hit &hit,mat4 trans,mat4 invtrans){
 
 		// vec4 m_posi = trans*vec4(0,0,0,1);
 		// vec3 m_pos = vec3(m_posi.x,m_posi.y,m_posi.z)/m_posi.w;
+		vec3 hit_pos;
+		vec3 normal;
 
 		origin = origin-tol*dir;
 
@@ -458,16 +479,17 @@ float Sphere::intersect(vec3 origin, vec3 dir, vec3 &hit, vec3 &normal,mat4 tran
 			t0 = 0;
 		}
 
-		hit = origin + (float)t0*dir;
-		normal = (hit-m_pos)/(float)m_radius;
+		hit_pos = origin + (float)t0*dir;
+		normal = (hit_pos-m_pos)/(float)m_radius;
 
-		hit = vec3(trans * vec4(hit,1.0f));
+		hit_pos = vec3(trans * vec4(hit_pos,1.0f));
 		normal = vec3(trans * vec4(normal,0.0f));
 		// if (t0>=0){
-		// 	t0 = length(hit-origin);
+		// 	t0 = length(hit_pos-origin);
 		// } else {
-		// 	t0 = -length(hit-origin);
+		// 	t0 = -length(hit_pos-origin);
 		// }
-
+		hit.pos = hit_pos;
+		hit.normal = normal;
 		return t0;
 }

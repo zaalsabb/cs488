@@ -52,28 +52,50 @@ std::ostream& operator<<(std::ostream& out, const Quad& quad)
   return out;
 }
 
-float Quad::intersect(vec3 origin, vec3 dir, vec3 &hit, vec3 &normal0,mat4 trans,mat4 invtrans){
+float Quad::intersect(vec3 origin, vec3 dir, Hit &hit,mat4 trans,mat4 invtrans){
 
 	float t;
 	float t0=0.0f;
 	float U;
 	float V;
+	vec3 hit_pos;
+	vec3 normal0;
 
 	origin = origin-tol*dir;
 
+	// vec3 C0 = m_vertices[0];
+	// vec3 C1 = m_vertices[m_cols];
+	// vec3 C2 = m_vertices[m_cols*(m_rows-1)];
+	// vec3 C3 = m_vertices[m_cols*m_rows];
+
+	vec3 C0 = m_vertices[(int)m_faces[0].v1];
+	vec3 C1 = m_vertices[(int)m_faces[0].v2];
+	vec3 C2 = m_vertices[(int)m_faces[0].v3];
+	vec3 C3 = m_vertices[(int)m_faces[0].v4];
+
+	vec4 C0i = trans * vec4(C0.x,C0.y,C0.z,1.0f);
+	vec4 C1i = trans * vec4(C1.x,C1.y,C1.z,1.0f);
+	vec4 C2i = trans * vec4(C2.x,C2.y,C2.z,1.0f);
+	vec4 C3i = trans * vec4(C3.x,C3.y,C3.z,1.0f);
+
+	C0 = vec3(C0i.x,C0i.y,C0i.z)/C0i.w;
+	C1 = vec3(C1i.x,C1i.y,C1i.z)/C1i.w;
+	C2 = vec3(C2i.x,C2i.y,C2i.z)/C2i.w;
+	C3 = vec3(C3i.x,C3i.y,C3i.z)/C3i.w;	
+
 	for (int i=0; i<m_faces.size(); i++){
 
-		int U1 = (((int)m_faces[i].v1 % m_cols));
-		int V1 = (((int)m_faces[i].v1 - (int)m_faces[i].v1 % m_cols)/m_cols);
+		// int U1 = (((int)m_faces[i].v1 % m_cols));
+		// int V1 = (((int)m_faces[i].v1 - (int)m_faces[i].v1 % m_cols)/m_cols);
 
-		int U2 = (((int)m_faces[i].v2 % m_cols));
-		int V2 = (((int)m_faces[i].v2 - (int)m_faces[i].v2 % m_cols)/m_cols);
+		// int U2 = (((int)m_faces[i].v2 % m_cols));
+		// int V2 = (((int)m_faces[i].v2 - (int)m_faces[i].v2 % m_cols)/m_cols);
 
-		int U3 = (((int)m_faces[i].v3 % m_cols));
-		int V3 = (((int)m_faces[i].v3 - (int)m_faces[i].v3 % m_cols)/m_cols);
+		// int U3 = (((int)m_faces[i].v3 % m_cols));
+		// int V3 = (((int)m_faces[i].v3 - (int)m_faces[i].v3 % m_cols)/m_cols);
 
-		int U4 = (((int)m_faces[i].v4 % m_cols));
-		int V4 = (((int)m_faces[i].v4 - (int)m_faces[i].v4 % m_cols)/m_cols);
+		// int U4 = (((int)m_faces[i].v4 % m_cols));
+		// int V4 = (((int)m_faces[i].v4 - (int)m_faces[i].v4 % m_cols)/m_cols);
 
 		vec3 c0 = m_vertices[(int)m_faces[i].v1];
 		vec3 c1 = m_vertices[(int)m_faces[i].v2];
@@ -98,52 +120,54 @@ float Quad::intersect(vec3 origin, vec3 dir, vec3 &hit, vec3 &normal0,mat4 trans
 		// c3 = c3 + normal*perlin.noise_function(U4,V4,m_rows,m_cols);		
 
 		t = dot((c0-origin),normal)/dot(normal,dir);
-		hit = origin + t*dir;
+		hit_pos = origin + t*dir;
 
 		float u1;
 		float v1;
 		float u2;
 		float v2;
 
-		// check if hit is in quad subdivision 1 or 2
-		if (checkSubdivision(hit,c0, c1, c2, u1, v1)) {
+		// check if hit_pos is in quad subdivision 1 or 2
+		if (checkSubdivision(hit_pos,c0, c1, c2, u1, v1)) {
 			if (t0==0.0f){
 				t0 = t;
 				normal0 = normal;
-				U = (float)U1 + u1;
-				V = (float)V1 + v1;
+				checkSubdivision(hit_pos,C0, C1, C2, U, V);
 			} else if (t<t0) {
 				t0 = t;
 				normal0 = normal;
-				U = (float)U1 + u1;
-				V = (float)V1 + v1;
+				checkSubdivision(hit_pos,C0, C1, C2, U, V);
 			}
-		} else if (checkSubdivision(hit,c0, c2, c3, u2, v2)) {
+		} else if (checkSubdivision(hit_pos,c0, c2, c3, u2, v2)) {
 			if (t0==0.0f){
 				t0 = t;
 				normal0 = normal;
-				U = (float)U1 + u1;
-				V = (float)V1 + v1;
+				checkSubdivision(hit_pos,C0, C1, C2, U, V);
 			} else if (t<t0) {
 				t0 = t;
 				normal0 = normal;
-				U = (float)U1 + u1;
-				V = (float)V1 + v1;
+				checkSubdivision(hit_pos,C0, C1, C2, U, V);
 			}
 		}
 	}
 	
-	hit = origin + t0*dir;
+	hit_pos = origin + t0*dir;
 	// perlin.noise_normal(U,V,m_rows,m_cols,normal0);
+	hit.pos = hit_pos;
+	hit.normal = normal0;
+
+	hit.U = U/(float)m_cols;
+	hit.V = V/(float)m_rows;
+
 	return t0;
 }
 
-bool Quad::checkSubdivision(vec3 hit, vec3 c0, vec3 c1, vec3 c2, float &u, float &v){
+bool Quad::checkSubdivision(vec3 hit_pos, vec3 c0, vec3 c1, vec3 c2, float &u, float &v){
 
-	u = dot(c1-c0,hit-c0)/dot(c1-c0,c1-c0);
-	v = dot(c2-c0,hit-c0)/dot(c2-c0,c2-c0);
+	u = dot(c1-c0,hit_pos-c0)/dot(c1-c0,c1-c0);
+	v = dot(c2-c0,hit_pos-c0)/dot(c2-c0,c2-c0);
 	
-	return SameSide(hit,c0, c1,c2) & SameSide(hit,c1, c0,c2) & SameSide(hit,c2, c0,c1);
+	return SameSide(hit_pos,c0, c1,c2) & SameSide(hit_pos,c1, c0,c2) & SameSide(hit_pos,c2, c0,c1);
 }
 
 void Quad::TransformCoordinates(mat4 trans){
