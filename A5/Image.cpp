@@ -130,16 +130,16 @@ bool Image::savePng(const std::string & filename) const
 }
 
 //---------------------------------------------------------------------------------------
-bool Image::loadPng(const std::string & filename)
+bool Image::loadPng(const std::string & filename, int colorComponents)
 {
 
 	std::vector<unsigned char> image;
 
     // decode the image file
-	unsigned error = lodepng::decode(image, m_width, m_height, filename);
+	unsigned error = lodepng::decode(image, m_width, m_height, filename, LCT_RGB);
 
 	// assign memory to store image data
-	size_t numElements = m_width * m_height * m_colorComponents;
+	size_t numElements = m_width * m_height * colorComponents;
 	m_data = new double[numElements];
 	memset(m_data, 0, numElements*sizeof(double));
 
@@ -148,12 +148,21 @@ bool Image::loadPng(const std::string & filename)
 				<< std::endl;
 	}
 
-	int color;
-	for (uint y(0); y < m_height; y++) {
+	// int color;
+  // int k = 0;
+  // std::cout <<image.size()<< '\n';
+  // std::cout <<numElements<< '\n';
+
+  // for (uint i=0; i < image.size(); ++i) {
+  //   if (i%3!=0){
+  //       m_data[k] = ((double)image[i])/255.0f;
+  //       k++;
+  //     }
+  // }
+  for (uint y(0); y < m_height; y++) {
 		for (uint x(0); x < m_width; x++) {
-			for (uint i(0); i < m_colorComponents; ++i) {
-				color = image[m_colorComponents * (m_width * y + x) + i];
-        m_data[m_colorComponents * (m_width * y + x) + i] = ((double)color)/255.0f;
+			for (uint i(0); i < colorComponents; ++i) {
+				m_data[colorComponents * (m_width * y + x) + i] = ((double)image[colorComponents * (m_width * y + x) + i])/255;
 			}
 		}
 	}

@@ -6,7 +6,7 @@ Texture::~Texture() {
 }
 
 void Texture::loadTexture(){
-  image->loadPng(m_fname);
+  image->loadPng(m_fname,3);
 }
 
 glm::vec3 Texture::getColor(int x, int y){

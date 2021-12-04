@@ -7,6 +7,13 @@ mat4 = gr.material({0.7, 0.6, 1.0}, {0.5, 0.4, 0.8}, 25)
 
 scene_root = gr.node('root')
 
+t = gr.texture("test.png")
+st = gr.cylinder('s1', {0, -200, 100}, 100, 100)
+scene_root:add_child(st)
+st:set_material(mat1)
+st:set_texture(t)
+st:rotate('x', 45)
+
 s1 = gr.nh_sphere('s1', {0, 0, -400}, 100)
 scene_root:add_child(s1)
 s1:set_material(mat1)

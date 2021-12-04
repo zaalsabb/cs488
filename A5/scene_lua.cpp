@@ -48,6 +48,7 @@
 #include "Mesh.hpp"
 #include "Quad.hpp"
 #include "Texture.hpp"
+#include "Bump.hpp"
 
 #include "GeometryNode.hpp"
 #include "JointNode.hpp"
@@ -106,6 +107,10 @@ struct gr_light_ud {
 
 struct gr_texture_ud {
   Texture* texture;
+};
+
+struct gr_bump_ud {
+  Bump* bump;
 };
 
 // Useful function to retrieve and check an n-tuple of numbers.
@@ -347,8 +352,8 @@ int gr_quad_cmd(lua_State* L)
 
 	const char* name = luaL_checkstring(L, 1);
 	const char* obj_fname = luaL_checkstring(L, 2);
-  int n_cols = luaL_checknumber(L, 3);
-  int n_rows = luaL_checknumber(L, 4);
+  int n_cols = 1;
+  int n_rows = 1;
 
 	std::string sfname(obj_fname);
 
@@ -487,6 +492,21 @@ int gr_texture_cmd(lua_State* L)
   return 1;
 }
 
+// Create a Bump
+extern "C"
+int gr_bump_cmd(lua_State* L)
+{
+  GRLUA_DEBUG_CALL;
+
+  gr_bump_ud* data = (gr_bump_ud*)lua_newuserdata(L, sizeof(gr_bump_ud));
+  data->bump = new Bump(luaL_checkstring(L, 1));
+
+  luaL_newmetatable(L, "gr.bump");
+  lua_setmetatable(L, -2);
+
+  return 1;
+}
+
 // Add a Child to a node
 extern "C"
 int gr_node_add_child_cmd(lua_State* L)
@@ -550,6 +570,30 @@ int gr_node_set_texture_cmd(lua_State* L)
   Texture* texture = matdata->texture;
 
   self->setTexture(texture);
+
+  return 0;
+}
+
+
+// Set a node's Bump
+extern "C"
+int gr_node_set_bump_cmd(lua_State* L)
+{
+  GRLUA_DEBUG_CALL;
+
+  gr_node_ud* selfdata = (gr_node_ud*)luaL_checkudata(L, 1, "gr.node");
+  luaL_argcheck(L, selfdata != 0, 1, "Node expected");
+
+  GeometryNode* self = dynamic_cast<GeometryNode*>(selfdata->node);
+
+  luaL_argcheck(L, self != 0, 1, "Geometry node expected");
+
+  gr_bump_ud* matdata = (gr_bump_ud*)luaL_checkudata(L, 2, "gr.bump");
+  luaL_argcheck(L, matdata != 0, 2, "Bump expected");
+
+  Bump* bump = matdata->bump;
+
+  self->setBump(bump);
 
   return 0;
 }
@@ -665,6 +709,7 @@ static const luaL_Reg grlib_functions[] = {
   {"cylinder", gr_cylinder_cmd},
   {"quad", gr_quad_cmd},
   {"texture", gr_texture_cmd},
+  {"bump", gr_bump_cmd},
   {0, 0}
 };
 
@@ -690,6 +735,7 @@ static const luaL_Reg grlib_node_methods[] = {
   {"render", gr_render_cmd},
   // new for project
   {"set_texture", gr_node_set_texture_cmd},
+  {"set_bump", gr_node_set_bump_cmd},
   {0, 0}
 };
 

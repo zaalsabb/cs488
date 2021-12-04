@@ -132,21 +132,21 @@ float Quad::intersect(vec3 origin, vec3 dir, Hit &hit,mat4 trans,mat4 invtrans){
 			if (t0==0.0f){
 				t0 = t;
 				normal0 = normal;
-				checkSubdivision(hit_pos,C0, C1, C3, V, U);
+				checkSubdivision(hit_pos,C0, C1, C3, U, V);
 			} else if (t<t0) {
 				t0 = t;
 				normal0 = normal;
-				checkSubdivision(hit_pos,C0, C1, C3, V, U);
+				checkSubdivision(hit_pos,C0, C1, C3, U, V);
 			}
 		} else if (checkSubdivision(hit_pos,c0, c2, c3, u2, v2)) {
 			if (t0==0.0f){
 				t0 = t;
 				normal0 = normal;
-				checkSubdivision(hit_pos,C0, C1, C3, V, U);
+				checkSubdivision(hit_pos,C0, C1, C3, U, V);
 			} else if (t<t0) {
 				t0 = t;
 				normal0 = normal;
-				checkSubdivision(hit_pos,C0, C1, C3, V, U);
+				checkSubdivision(hit_pos,C0, C1, C3, U, V);
 			}
 		}
 	}
@@ -156,8 +156,8 @@ float Quad::intersect(vec3 origin, vec3 dir, Hit &hit,mat4 trans,mat4 invtrans){
 	hit.pos = hit_pos;
 	hit.normal = normal0;
 
-	hit.U = U;
-	hit.V = V;
+	hit.U = (float)clamp((double)U, 0.0, 1.0);
+	hit.V = (float)clamp((double)V, 0.0, 1.0);
 
 	return t0;
 }

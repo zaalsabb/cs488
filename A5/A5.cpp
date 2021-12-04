@@ -41,6 +41,7 @@ void A5_Render(
 	root->ApplyScales();
 
 	LoadTextures(root);
+	LoadBumps(root);
 
 
   glm::vec3 wi = glm::normalize(eye - view);
@@ -102,29 +103,29 @@ void A5_Render(
 
 		}
 	}
-	const GeometryNode * geometryNode;
-
-	for (SceneNode * node : root->children) {
-		if (node->m_nodeType == NodeType::GeometryNode){
-			geometryNode = static_cast<const GeometryNode *>(node);
-			if (geometryNode->m_texture != nullptr){
-
-				for (uint y = 0; y < h; ++y) {
-					for (uint x = 0; x < w; ++x) {
-
-						// Red:
-						image(x, y, 0) = (double)geometryNode->m_texture->getColor(x,y).x;
-						// Green:
-						image(x, y, 1) = (double)geometryNode->m_texture->getColor(x,y).y;
-						// Blue:
-						image(x, y, 2) = (double)geometryNode->m_texture->getColor(x,y).z;
-
-					}
-				}
-			}
-
-		}
-	}
+	// const GeometryNode * geometryNode;
+	//
+	// for (SceneNode * node : root->children) {
+	// 	if (node->m_nodeType == NodeType::GeometryNode){
+	// 		geometryNode = static_cast<const GeometryNode *>(node);
+	// 		if (geometryNode->m_texture != nullptr){
+	//
+	// 			for (uint y = 0; y < h; ++y) {
+	// 				for (uint x = 0; x < w; ++x) {
+	//
+	// 					// Red:
+	// 					image(x, y, 0) = (double)geometryNode->m_texture->getColor(x,y).x;
+	// 					// Green:
+	// 					image(x, y, 1) = (double)geometryNode->m_texture->getColor(x,y).y;
+	// 					// Blue:
+	// 					image(x, y, 2) = (double)geometryNode->m_texture->getColor(x,y).z;
+	//
+	// 				}
+	// 			}
+	// 		}
+	//
+	// 	}
+	// }
 	std::cout <<" -> Rendering Finished!"<< '\n';
 }
 
@@ -213,8 +214,10 @@ void rayIntersection(SceneNode * root, glm::vec3 origin, glm::vec3 dir,Hit &hit)
 					hit.mat.m_ks = mat->m_ks;
 					hit.mat.m_shininess = mat->m_shininess;
 					if (geometryNode->m_texture != nullptr){
-						hit.U = hit.U*(float)geometryNode->m_texture->image->width()/5;
-						hit.V = hit.V*(float)geometryNode->m_texture->image->height();
+						float H = (float)geometryNode->m_texture->image->height();
+						float W = (float)geometryNode->m_texture->image->width();
+						hit.U = hit.U*W;
+						hit.V = H-hit.V*H;
 						// std::cout << hit.U << std::endl;
 						hit.mat.m_kd = geometryNode->m_texture->getColor((uint)hit.U,(uint)hit.V);
 						hit.mat.m_ks=glm::vec3(0,0,0);
@@ -254,7 +257,6 @@ float Fresnel(float n1,float n2,glm::vec3 V,glm::vec3 &T, glm::vec3 N){
 
 void LoadTextures(SceneNode * root){
 	const GeometryNode * geometryNode;
-
 	for (SceneNode * node : root->children) {
 		if (node->m_nodeType == NodeType::GeometryNode){
 			geometryNode = static_cast<const GeometryNode *>(node);
@@ -262,6 +264,19 @@ void LoadTextures(SceneNode * root){
 				geometryNode->m_texture->loadTexture();
 			}
 			LoadTextures(node);
+		}
+	}
+}
+
+void LoadBumps(SceneNode * root){
+	const GeometryNode * geometryNode;
+	for (SceneNode * node : root->children) {
+		if (node->m_nodeType == NodeType::GeometryNode){
+			geometryNode = static_cast<const GeometryNode *>(node);
+			if (geometryNode->m_bump != nullptr){
+				geometryNode->m_bump->loadBump();
+			}
+			LoadBumps(node);
 		}
 	}
 }

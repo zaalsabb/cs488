@@ -142,7 +142,7 @@ float Cone::intersect(vec3 origin, vec3 dir, Hit &hit,mat4 trans,mat4 invtrans){
 	// 	t0 = -length(hit_pos-origin);
 	// }
 	hit.pos = hit_pos;
-	hit.normal = normal;	
+	hit.normal = normal;
 	return t0;
 
 }
@@ -150,9 +150,12 @@ float Cone::intersect(vec3 origin, vec3 dir, Hit &hit,mat4 trans,mat4 invtrans){
 
 float Cylinder::intersect(vec3 origin, vec3 dir, Hit &hit,mat4 trans,mat4 invtrans){
 
-	//std::cout << m_height << std::endl;
+	float PI = 3.1415;
+
 	vec3 hit_pos;
 	vec3 normal;
+	float U;
+	float V;
 
 	origin = origin-tol*dir;
 
@@ -190,33 +193,46 @@ float Cylinder::intersect(vec3 origin, vec3 dir, Hit &hit,mat4 trans,mat4 invtra
 	vec3 hit_pos0 = origin + (float)t0*dir;
 	vec3 normal0;
 	if (hit_pos0[1]-m_pos[1]<0){
+		// bottom face
 		vec3 p = m_pos;
 		normal0 = vec3(0,-1,0);
 		t0 = dot((p-origin),normal0)/dot(normal0,dir);
 		hit_pos0 = origin + (float)t0*dir;
-		if (length(vec2(hit_pos0[0],hit_pos0[2])-vec2(p[0],p[2]))<m_radius){
+		vec2 uv = (vec2(hit_pos0[0],hit_pos0[2])-vec2(p[0],p[2]))/m_radius;
+		if (length(uv)<1){
 			hit_pos = hit_pos0;
 			normal = normal0;
+			U = (uv[0]+1)/2;
+			V = (uv[1]+1)/2;
 		} else {
 			return 0;
 		}
 	} else if (hit_pos0[1]-m_pos[1]>m_height){
+		// top face
 		vec3 p = m_pos+vec3(0,m_height,0);
 		normal0 = vec3(0,1,0);
 		t0 = dot((p-origin),normal0)/dot(normal0,dir);
 		hit_pos0 = origin + (float)t0*dir;
-		if (length(vec2(hit_pos0[0],hit_pos0[2])-vec2(p[0],p[2]))<m_radius){
+		vec2 uv = (vec2(hit_pos0[0],hit_pos0[2])-vec2(p[0],p[2]))/m_radius;
+		if (length(uv)<1){
 			hit_pos = hit_pos0;
 			normal = normal0;
+			U = (uv[0]+1)/2;
+			V = (uv[1]+1)/2;
 		} else {
 			return 0;
 		}
-		
+
 	} else {
+		// cylinderical side
 		hit_pos = hit_pos0;
 		normal = normalize(hit_pos - vec3(m_pos[0],hit_pos[1],m_pos[2]));
+		vec2 uv = (vec2(hit_pos0[0],hit_pos0[2])-vec2(m_pos[0],m_pos[2]))/m_radius;
+		U = atan2((double)uv[1],(double)uv[0]) /(2 * PI);
+		V = (hit_pos[1]-m_pos[1])/m_height;
+		// std::cout << "stop here\n" << std::endl;
 	}
-	
+
 	hit_pos = vec3(trans * vec4(hit_pos,1.0f));
 	normal = vec3(trans * vec4(normal,0.0f));
 	// if (t0>=0){
@@ -225,7 +241,9 @@ float Cylinder::intersect(vec3 origin, vec3 dir, Hit &hit,mat4 trans,mat4 invtra
 	// 	t0 = -length(hit_pos-origin);
 	// }
 	hit.pos = hit_pos;
-	hit.normal = normal;	
+	hit.normal = normal;
+	hit.U = (float)clamp((double)U, 0.0, 1.0);
+	hit.V = (float)clamp((double)V, 0.0, 1.0);
 	return t0;
 
 }

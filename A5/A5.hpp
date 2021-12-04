@@ -29,6 +29,7 @@ void A5_Render(
 void rayIntersection(SceneNode * root, glm::vec3 origin, glm::vec3 dir,
 												 Hit & hit);
 void LoadTextures(SceneNode * root);
+void LoadBumps(SceneNode * root);
 
 glm::vec3 shade(SceneNode * root,
 						const glm::vec3 origin,
