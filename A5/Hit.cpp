@@ -13,6 +13,8 @@ glm::vec3 Hit::Reflection(glm::vec3 V){
 void Hit::copy(Hit hit0){
   pos=hit0.pos;
   normal=hit0.normal;
-  U=hit0.U;
-  V=hit0.V;
+  U = hit0.U;
+  V = hit0.V;
+  Pu = hit0.Pu;
+  Pv = hit0.Pv;
 }

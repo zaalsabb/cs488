@@ -108,17 +108,17 @@ void A5_Render(
 	// for (SceneNode * node : root->children) {
 	// 	if (node->m_nodeType == NodeType::GeometryNode){
 	// 		geometryNode = static_cast<const GeometryNode *>(node);
-	// 		if (geometryNode->m_texture != nullptr){
+	// 		if (geometryNode->m_bump != nullptr){
 	//
 	// 			for (uint y = 0; y < h; ++y) {
 	// 				for (uint x = 0; x < w; ++x) {
 	//
 	// 					// Red:
-	// 					image(x, y, 0) = (double)geometryNode->m_texture->getColor(x,y).x;
+	// 					image(x, y, 0) = (double)geometryNode->m_bump->getDepth(x,y);
 	// 					// Green:
-	// 					image(x, y, 1) = (double)geometryNode->m_texture->getColor(x,y).y;
+	// 					image(x, y, 1) = (double)geometryNode->m_bump->getDepth(x,y);
 	// 					// Blue:
-	// 					image(x, y, 2) = (double)geometryNode->m_texture->getColor(x,y).z;
+	// 					image(x, y, 2) = (double)geometryNode->m_bump->getDepth(x,y);
 	//
 	// 				}
 	// 			}
@@ -216,14 +216,23 @@ void rayIntersection(SceneNode * root, glm::vec3 origin, glm::vec3 dir,Hit &hit)
 					if (geometryNode->m_texture != nullptr){
 						float H = (float)geometryNode->m_texture->image->height();
 						float W = (float)geometryNode->m_texture->image->width();
-						hit.U = hit.U*W;
-						hit.V = H-hit.V*H;
+						uint U = hit.U*W;
+						uint V = H-hit.V*H;
 						// std::cout << hit.U << std::endl;
-						hit.mat.m_kd = geometryNode->m_texture->getColor((uint)hit.U,(uint)hit.V);
+						hit.mat.m_kd = geometryNode->m_texture->getColor(U,V);
 						hit.mat.m_ks=glm::vec3(0,0,0);
 
 					} else {
 						hit.mat.m_kd = mat->m_kd;
+					}
+
+					if (geometryNode->m_bump != nullptr){
+						float H = (float)geometryNode->m_bump->image->height();
+						float W = (float)geometryNode->m_bump->image->width();
+						uint U = hit.U*W;
+						uint V = H-hit.V*H;
+						// std::cout << hit.U << std::endl;
+						geometryNode->m_bump->perturbNormal(U, V, hit);
 					}
 				}
 			}

@@ -155,6 +155,9 @@ float Quad::intersect(vec3 origin, vec3 dir, Hit &hit,mat4 trans,mat4 invtrans){
 	// perlin.noise_normal(U,V,m_rows,m_cols,normal0);
 	hit.pos = hit_pos;
 	hit.normal = normal0;
+	
+	hit.Pu = glm::normalize(C1-C0);
+	hit.Pv = glm::normalize(C3-C0);
 
 	hit.U = (float)clamp((double)U, 0.0, 1.0);
 	hit.V = (float)clamp((double)V, 0.0, 1.0);

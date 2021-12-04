@@ -16,5 +16,7 @@ public:
   float t=0;
   float U;
   float V;
+  glm::vec3 Pu;
+  glm::vec3 Pv;  
   PhongMaterial mat = PhongMaterial(glm::vec3(0.0f,0.0f,0.0f),glm::vec3(0.0f,0.0f,0.0f),0.0f);
 };
