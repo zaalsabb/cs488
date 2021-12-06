@@ -23,15 +23,25 @@ void A5_Render(
 
 		// Lighting parameters
 		const glm::vec3 & ambient,
-		const std::list<Light *> & lights
+		const std::list<Light *> & lights,
+
+		// Depth of Field Parameters
+		float aperture,
+		float focalLength,
+		float screenPosition,
+
+		// super sampling parameter
+		int superSamplingScale
 );
 
 void rayIntersection(SceneNode * root, glm::vec3 origin, glm::vec3 dir,
 												 Hit & hit);
 void LoadTextures(SceneNode * root);
 void LoadBumps(SceneNode * root);
+void UniformDistribution(float c,int x,int y, Image &image1, Image &image2);
+void superSampling(Image &image1, Image &image2, int scale);
 
-glm::vec3 shade(SceneNode * root,
+glm::vec4 shade(SceneNode * root,
 						const glm::vec3 origin,
 						const glm::vec3 dir,
 						const glm::vec3 ambient,

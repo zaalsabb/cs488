@@ -40,7 +40,12 @@ public:
 	// Retrieve a particular component from the image.
 	double & operator()(uint x, uint y, uint i);
 
+	Image & operator*(const float s);
+
+	void reinitialize(uint width,uint height);
+
 	double getPixelValue(uint x, uint y, uint i);
+	void setPixelValue(uint x, uint y, uint i, double val);
 
 	// Save this image into the PNG file with name 'filename'.
 	// Warning: If 'filename' already exists, it will be overwritten.

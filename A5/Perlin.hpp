@@ -5,16 +5,20 @@
 #include <list>
 #include <iostream>
 #include <cmath>
+#include "Image.hpp"
+
+using namespace glm;
 
 class Perlin {
 public:
-    Perlin(float noise);
-
+    Perlin();
     virtual ~Perlin();
-    void random();
-    float noise_normal(float x, float y, int sx, int sy, glm::vec3 &normal);
+    double perlinNoise(float x, float y, float octave);
+    vec2 TableToVector(int n);
+    double Fade(double t);
+    double Lerp(double t, double a, double b);
+
 private:
-	float m_noise;
     int seed[512] = {128, 152, 248, 243, 171,  69, 247,  43, 130, 200, 149, 188,   0,
                 158, 204,  96, 163,  91, 109, 222, 104, 216, 229,  81, 195, 210,
                 64,  79, 241,  41,  13,  27, 210, 228, 167, 250, 152,  33, 202,

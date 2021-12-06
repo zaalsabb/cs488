@@ -2,12 +2,18 @@
 using namespace glm;
 
 Bump::Bump(const std::string& fname ) : m_fname(fname) {}
+Bump::Bump(){}
 
 Bump::~Bump() {
 }
 
 void Bump::loadBump(){
-  image->loadPng(m_fname,3);
+  if (m_fname=="" & noise > 0){
+    image->reinitialize(perlin_w,perlin_h);
+    perlinHeightMap();
+  } else {
+    image->loadPng(m_fname,3);
+  }
 }
 
 float Bump::getDepth(int x, int y){
@@ -38,4 +44,13 @@ void Bump::perturbNormal(int x, int y, Hit &hit){
   // if (Fu!=0 & Fv!=0){
   hit.normal = normalize(hit.normal+(Fu*cross(hit.normal,hit.Pu)+Fv*cross(hit.normal,hit.Pv))/length(hit.normal));
   // }
+}
+
+void Bump::perlinHeightMap(){
+  for (uint y = 0; y < image->height(); ++y) {
+		for (uint x = 0; x < image->width(); ++x) {
+      double h = perlin.perlinNoise(x/(float)perlin_w*256,y/(float)perlin_h*256,octave);
+			image->setPixelValue(x,y,0,h*noise);
+    }
+  }
 }

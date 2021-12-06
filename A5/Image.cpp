@@ -27,6 +27,15 @@ Image::Image(
 	memset(m_data, 0, numElements*sizeof(double));
 }
 
+void Image::reinitialize(uint width,	uint height){
+  m_width=width;
+  m_height=height;
+	size_t numElements = m_width * m_height * m_colorComponents;
+	m_data = new double[numElements];
+	memset(m_data, 0, numElements*sizeof(double));
+}
+
+
 //---------------------------------------------------------------------------------------
 Image::Image(const Image & other)
   : m_width(other.m_width),
@@ -89,9 +98,30 @@ double Image::getPixelValue(uint x, uint y, uint i)
 }
 
 //---------------------------------------------------------------------------------------
+void Image::setPixelValue(uint x, uint y, uint i, double val)
+{
+  m_data[m_colorComponents * (m_width * y + x) + i] = val;
+}
+
+//---------------------------------------------------------------------------------------
 double & Image::operator()(uint x, uint y, uint i)
 {
   return m_data[m_colorComponents * (m_width * y + x) + i];
+}
+
+//---------------------------------------------------------------------------------------
+Image & Image::operator*(const float s)
+{
+  double color;
+  for (uint y(0); y < m_height; y++) {
+		for (uint x(0); x < m_width; x++) {
+			for (uint i(0); i < m_colorComponents; ++i) {
+				color = m_data[m_colorComponents * (m_width * y + x) + i];
+				m_data[m_colorComponents * (m_width * y + x) + i] = (double)(color*s);
+			}
+		}
+	}
+  return *this;
 }
 
 //---------------------------------------------------------------------------------------

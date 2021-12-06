@@ -10,9 +10,9 @@
 
 // parameters user can set
 float N_SOLID = 6.0;
-int MAX_RECURSION_DEPTH = 1;
+int MAX_RECURSION_DEPTH = 0;
 bool SHADOWS_ON = true;
-bool 	REFLECTIONS_ON = true;
+bool 	REFLECTIONS_ON = false;
 
 //constants
 float PI = 3.1415;
@@ -32,7 +32,15 @@ void A5_Render(
 
 		// Lighting parameters
 		const glm::vec3 & ambient,
-		const std::list<Light *> & lights
+		const std::list<Light *> & lights,
+
+		// Depth of Field Parameters
+		float aperture,
+		float focalLength,
+		float screenPosition,
+
+		// super sampling parameter
+		int superSamplingScale
 ) {
 
 	// recursively build hierarchical graph transformations
@@ -42,7 +50,6 @@ void A5_Render(
 
 	LoadTextures(root);
 	LoadBumps(root);
-
 
   glm::vec3 wi = glm::normalize(eye - view);
   glm::vec3 ui = glm::normalize(glm::cross(up,wi));
@@ -69,8 +76,11 @@ void A5_Render(
 	std::cout << "\t}" << std::endl;
 	std:: cout <<")" << std::endl;
 
-	size_t h = image.height();
-	size_t w = image.width();
+	size_t h = image.height()*superSamplingScale;
+	size_t w = image.width()*superSamplingScale;
+
+	Image depthBuffer = Image(w,h);
+	Image image_original = Image(w,h);
 
 	glm::vec3 pixel_cam;
 	glm::vec3 pixel_world;
@@ -78,7 +88,8 @@ void A5_Render(
 
 	std::cout << "std::precision(10):    " << std::setprecision(10) << 1.2345678901234567890f << '\n';
 
-	progressbar bar(h*w);
+	progressbar bar(h*w*2);
+	float maxDepth=0;
 
 	for (uint y = 0; y < h; ++y) {
 		for (uint x = 0; x < w; ++x) {
@@ -90,46 +101,57 @@ void A5_Render(
 			pixel_world = pixel_cam[0]*ui + pixel_cam[1]*vi + pixel_cam[2]*wi + ei;
 
 			dir = glm::normalize(ei-pixel_world);
-			glm::vec3 L = shade(root, ei, dir, ambient, lights, 0);
+			glm::vec4 L = shade(root, ei, dir, ambient, lights, 0);
 
 			// Red:
-			image(x, y, 0) = (double)L[0];
+			image_original(x, y, 0) = (double)L[0];
 			// Green:
-			image(x, y, 1) = (double)L[1];
+			image_original(x, y, 1) = (double)L[1];
 			// Blue:
-			image(x, y, 2) = (double)L[2];
+			image_original(x, y, 2) = (double)L[2];
+
+			//Depth Buffer:
+			depthBuffer(x,y,0) = (double)L[3];
+			depthBuffer(x,y,1) = (double)L[3];
+			depthBuffer(x,y,2) = (double)L[3];
+
+			if (L[3] > maxDepth){
+				maxDepth = L[3];
+			}
 
 			bar.update();
 
 		}
 	}
-	// const GeometryNode * geometryNode;
-	//
-	// for (SceneNode * node : root->children) {
-	// 	if (node->m_nodeType == NodeType::GeometryNode){
-	// 		geometryNode = static_cast<const GeometryNode *>(node);
-	// 		if (geometryNode->m_bump != nullptr){
-	//
-	// 			for (uint y = 0; y < h; ++y) {
-	// 				for (uint x = 0; x < w; ++x) {
-	//
-	// 					// Red:
-	// 					image(x, y, 0) = (double)geometryNode->m_bump->getDepth(x,y);
-	// 					// Green:
-	// 					image(x, y, 1) = (double)geometryNode->m_bump->getDepth(x,y);
-	// 					// Blue:
-	// 					image(x, y, 2) = (double)geometryNode->m_bump->getDepth(x,y);
-	//
-	// 				}
-	// 			}
-	// 		}
-	//
-	// 	}
-	// }
+	Image image_original2 = Image(w,h);
+
+	// float A = 3.0f;
+	// float f = 15.0f;
+	// float screenPosition = 15.0f;
+	// depthBuffer = depthBuffer*(1/screenPos);
+
+	// apply post-processing to image
+	for (uint y = 0; y < h; ++y) {
+		for (uint x = 0; x < w; ++x) {
+				float d = depthBuffer(x,y,0)/screenPosition;
+			if (d>0){
+				float CoC = std::abs(aperture*(screenPosition*(1/focalLength-1/d)-1));
+				// std::cout << CoC << std::endl;
+
+				UniformDistribution(CoC,x,y, image_original, image_original2);
+			}
+			bar.update();
+			// image(x,y,0) = depthBuffer(x,y,0)/maxDepth;
+			// image(x,y,1) = depthBuffer(x,y,0)/maxDepth;
+			// image(x,y,2) = depthBuffer(x,y,0)/maxDepth;
+		}
+	}
+	superSampling(image_original2,image,superSamplingScale);
+
 	std::cout <<" -> Rendering Finished!"<< '\n';
 }
 
-glm::vec3 shade(SceneNode * root,
+glm::vec4 shade(SceneNode * root,
 								const glm::vec3 origin,
 								const glm::vec3 dir,
 								const glm::vec3 ambient,
@@ -139,11 +161,10 @@ glm::vec3 shade(SceneNode * root,
 	Hit hit;
 	glm::vec3 L;
 	rayIntersection(root, origin, dir, hit);
+	float d = -(hit.pos.z-origin.z);
 
 	if (hit.t>0){
 
-		//PhongMaterial* mat = static_cast<PhongMaterial*>(geometryNode0->m_material);
-		//std::cout << glm::to_string(mat->m_ks ) << std::endl;
 		L = hit.mat.m_kd * ambient;
 		float p = hit.mat.m_shininess;
 
@@ -185,14 +206,15 @@ glm::vec3 shade(SceneNode * root,
 			float F = Fresnel(n1,n2,dir,T,hit.normal);
 
 			//std::cout << F << std::endl;
-			glm::vec3 refl = hit.mat.m_ks*F*shade(root, hit.pos, R, ambient, lights, recursionDepth+1);
-			glm::vec3 refr = hit.mat.m_ks/2*(1.0f-F)*shade(root, hit.pos, T, ambient, lights, recursionDepth+1);
+			glm::vec3 refl = hit.mat.m_ks*F*vec3(shade(root, hit.pos, R, ambient, lights, recursionDepth+1));
+			glm::vec3 refr = hit.mat.m_ks/2*(1.0f-F)*vec3(shade(root, hit.pos, T, ambient, lights, recursionDepth+1));
 			L = L +refl+refr;
 		}
 	} else {
 		L = glm::vec3(0.0f,0.0f,0.0f);
 	}
-	return L;
+	vec4 Ld = vec4(L,d);
+	return Ld;
 }
 
 void rayIntersection(SceneNode * root, glm::vec3 origin, glm::vec3 dir,Hit &hit){
@@ -286,6 +308,56 @@ void LoadBumps(SceneNode * root){
 				geometryNode->m_bump->loadBump();
 			}
 			LoadBumps(node);
+		}
+	}
+}
+
+void UniformDistribution(float c,int x,int y, Image &image1, Image &image2){
+	float r = c/2;
+	float a;
+	if (r<1){
+		r=1;
+		a=1;
+	} else {
+		a = PI*r*r;
+	}
+
+	vec3 i = vec3(image1(x,y,0),image1(x,y,1),image1(x,y,2))/a;
+	// for (uint yi = y-(int)r; yi < y+(int)r; ++y) {
+	// 	for (uint xi = x-(int)r; xi < x+(int)r; ++x) {
+	for (int xi=x-(int)r;xi<=x+(int)r;++xi){
+		for (int yi=y-(int)r;yi<=y+(int)r;++yi){
+			if (xi>0 & xi<image1.width() & yi>0 & yi<image2.height()){
+				if (std::sqrt((xi-x)*(xi-x)+(yi-y)*(yi-y))<r)
+				{
+					image2(xi,yi,0) += i[0];
+					image2(xi,yi,1) += i[1];
+					image2(xi,yi,2) += i[2];
+				}
+			}
+		}
+	}
+}
+
+void superSampling(Image &image1, Image &image2, int scale){
+
+	for (uint y = 0; y < image2.height(); ++y) {
+		for (uint x = 0; x < image2.width(); ++x) {
+			for (int s1 = 0; s1<scale; s1++){
+				for (int s2 = 0; s2<scale; s2++){
+					int x2 = x*scale+s1;
+					int y2 = y*scale+s2;
+					if (x2>=image1.width()){
+						x2 = image1.width()-1;
+					}
+					if (y2>=image1.height()){
+						y2 = image1.height()-1;
+					}
+					image2(x,y,0) += image1(x2,y2,0)/(scale*scale);
+					image2(x,y,1) += image1(x2,y2,1)/(scale*scale);
+					image2(x,y,2) += image1(x2,y2,2)/(scale*scale);
+				}
+			}
 		}
 	}
 }

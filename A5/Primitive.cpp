@@ -89,8 +89,12 @@ float NonhierSphere::intersect(vec3 origin, vec3 dir, Hit &hit,mat4 trans,mat4 i
 float Cone::intersect(vec3 origin, vec3 dir, Hit &hit,mat4 trans,mat4 invtrans){
 
 	//std::cout << m_height << std::endl;
+	float PI = 3.1415;
+
 	vec3 hit_pos;
 	vec3 normal;
+	float U;
+	float V;
 
 	origin = origin-tol*dir;
 
@@ -99,15 +103,14 @@ float Cone::intersect(vec3 origin, vec3 dir, Hit &hit,mat4 trans,mat4 invtrans){
 
 	double cos2_i = m_height*m_height/(m_height*m_height + m_radius*m_radius);
 
-	vec3 V = vec3(0,-1,0);
+	vec3 q = vec3(0,-1,0);
 
-	double A = (double)pow(dot(dir,V),2)-cos2_i;
-	double B = (double)2*(dot(V,(origin-m_pos))*dot(V,dir)-dot(dir,origin-m_pos)*cos2_i);
-	double C = (double)pow(dot(V,origin-m_pos),2)-dot(origin-m_pos,origin-m_pos)*cos2_i;
+	double A = (double)pow(dot(dir,q),2)-cos2_i;
+	double B = (double)2*(dot(q,(origin-m_pos))*dot(q,dir)-dot(dir,origin-m_pos)*cos2_i);
+	double C = (double)pow(dot(q,origin-m_pos),2)-dot(origin-m_pos,origin-m_pos)*cos2_i;
 
 	double t[2];
 	double t0;
-
 
 	quadraticRoots(A, B, C, t);
 
@@ -134,8 +137,13 @@ float Cone::intersect(vec3 origin, vec3 dir, Hit &hit,mat4 trans,mat4 invtrans){
 	vec3 n2 = cross(hit_pos-origin,hit_pos-m_pos);
 	normal = normalize(cross(n2,hit_pos-m_pos));
 
+	vec2 uv = (vec2(hit_pos[0],hit_pos[2])-vec2(m_pos[0],m_pos[2]))/m_radius;
+	U = atan2((double)uv[1],(double)uv[0]) /(2 * PI);
+	V = 1.0f+(hit_pos[1]-m_pos[1])/m_height;
+
 	hit_pos = vec3(trans * vec4(hit_pos,1.0f));
 	normal = vec3(trans * vec4(normal,0.0f));
+
 	// if (t0>=0){
 	// 	t0 = length(hit_pos-origin);
 	// } else {
@@ -143,6 +151,8 @@ float Cone::intersect(vec3 origin, vec3 dir, Hit &hit,mat4 trans,mat4 invtrans){
 	// }
 	hit.pos = hit_pos;
 	hit.normal = normal;
+	hit.U = (float)clamp((double)U, 0.0, 1.0);
+	hit.V = (float)clamp((double)V, 0.0, 1.0);
 	return t0;
 
 }

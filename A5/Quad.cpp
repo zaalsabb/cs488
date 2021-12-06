@@ -25,6 +25,7 @@ Quad::Quad( const std::string& fname, double n_cols, double n_rows )
 			m_vertices.push_back( vec3( vx, vy, vz ) );
 		} else if( code == "f" ) {
 			ifs >> s1 >> s2 >> s3 >> s4;
+			std::cout << s1 << std::endl;
 			m_faces.push_back( QuadFace( s1 - 1, s2 - 1, s3 - 1, s4 - 1 ) );
 		}
 	}
@@ -155,7 +156,7 @@ float Quad::intersect(vec3 origin, vec3 dir, Hit &hit,mat4 trans,mat4 invtrans){
 	// perlin.noise_normal(U,V,m_rows,m_cols,normal0);
 	hit.pos = hit_pos;
 	hit.normal = normal0;
-	
+
 	hit.Pu = glm::normalize(C1-C0);
 	hit.Pv = glm::normalize(C3-C0);
 

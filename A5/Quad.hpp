@@ -7,7 +7,6 @@
 #include <glm/glm.hpp>
 
 #include "Primitive.hpp"
-#include "Perlin.hpp"
 
 using namespace glm;
 
@@ -35,7 +34,6 @@ struct QuadFace
 class Quad : public Primitive {
 public:
   Quad( const std::string& fname, double n_cols, double n_rows);
-  Perlin perlin = Perlin(1.0f);
   virtual float intersect(vec3 origin, vec3 dir, Hit &hit,mat4 trans,mat4 invtrans);
 	virtual bool SameSide(vec3 p1,vec3 p2,vec3 a,vec3 b);
 	virtual void TransformCoordinates(mat4 trans);
