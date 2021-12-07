@@ -7,6 +7,7 @@
 #include <math.h>
 #include <iomanip>      // std::setprecision
 #include "progressbar.hpp"
+using namespace glm;
 
 // parameters user can set
 float N_SOLID = 6.0;
@@ -25,13 +26,13 @@ void A5_Render(
 		Image & image,
 
 		// Viewing parameters
-		const glm::vec3 & eye,
-		const glm::vec3 & view,
-		const glm::vec3 & up,
+		const vec3 & eye,
+		const vec3 & view,
+		const vec3 & up,
 		double fovy,
 
 		// Lighting parameters
-		const glm::vec3 & ambient,
+		const vec3 & ambient,
 		const std::list<Light *> & lights,
 
 		// Depth of Field Parameters
@@ -51,23 +52,23 @@ void A5_Render(
 	LoadTextures(root);
 	LoadBumps(root);
 
-  glm::vec3 wi = glm::normalize(eye - view);
-  glm::vec3 ui = glm::normalize(glm::cross(up,wi));
-  glm::vec3 vi = glm::cross(wi,ui);
-  glm::vec3 ei = eye;
+  vec3 wi = normalize(eye - view);
+  vec3 ui = normalize(cross(up,wi));
+  vec3 vi = cross(wi,ui);
+  vec3 ei = eye;
 
   float film_z = 1.0f;
-  float film_w  = 2*film_z*glm::tan(fovy/2*PI/180);
+  float film_w  = 2*film_z*tan(fovy/2*PI/180);
   float film_h  = film_w;
 
   std::cout << "Calling A5_Render(\n" <<
 		  "\t" << *root <<
           "\t" << "Image(width:" << image.width() << ", height:" << image.height() << ")\n"
-          "\t" << "eye:  " << glm::to_string(eye) << std::endl <<
-		  "\t" << "view: " << glm::to_string(view) << std::endl <<
-		  "\t" << "up:   " << glm::to_string(up) << std::endl <<
+          "\t" << "eye:  " << to_string(eye) << std::endl <<
+		  "\t" << "view: " << to_string(view) << std::endl <<
+		  "\t" << "up:   " << to_string(up) << std::endl <<
 		  "\t" << "fovy: " << fovy << std::endl <<
-          "\t" << "ambient: " << glm::to_string(ambient) << std::endl <<
+          "\t" << "ambient: " << to_string(ambient) << std::endl <<
 		  "\t" << "lights{" << std::endl;
 
 	for(const Light * light : lights) {
@@ -82,9 +83,9 @@ void A5_Render(
 	Image depthBuffer = Image(w,h);
 	Image image_original = Image(w,h);
 
-	glm::vec3 pixel_cam;
-	glm::vec3 pixel_world;
-	glm::vec3 dir;
+	vec3 pixel_cam;
+	vec3 pixel_world;
+	vec3 dir;
 
 	std::cout << "std::precision(10):    " << std::setprecision(10) << 1.2345678901234567890f << '\n';
 
@@ -100,8 +101,8 @@ void A5_Render(
 
 			pixel_world = pixel_cam[0]*ui + pixel_cam[1]*vi + pixel_cam[2]*wi + ei;
 
-			dir = glm::normalize(ei-pixel_world);
-			glm::vec4 L = shade(root, ei, dir, ambient, lights, 0);
+			dir = normalize(ei-pixel_world);
+			vec4 L = shade(root, ei, dir, ambient, lights, 0);
 
 			// Red:
 			image_original(x, y, 0) = (double)L[0];
@@ -151,15 +152,15 @@ void A5_Render(
 	std::cout <<" -> Rendering Finished!"<< '\n';
 }
 
-glm::vec4 shade(SceneNode * root,
-								const glm::vec3 origin,
-								const glm::vec3 dir,
-								const glm::vec3 ambient,
+vec4 shade(SceneNode * root,
+								const vec3 origin,
+								const vec3 dir,
+								const vec3 ambient,
 								const std::list<Light *> & lights,
 								const int recursionDepth)
 {
 	Hit hit;
-	glm::vec3 L;
+	vec3 L;
 	rayIntersection(root, origin, dir, hit);
 	float d = -(hit.pos.z-origin.z);
 
@@ -169,32 +170,33 @@ glm::vec4 shade(SceneNode * root,
 		float p = hit.mat.m_shininess;
 
 		for (Light * light : lights){
-			glm::vec3 l = light->position - hit.pos;
-			float r = glm::length(l);
-			glm::vec3 I = light->colour/(light->falloff[0]+light->falloff[1]*r+light->falloff[2]*r*r);
-			l = l/r;
+			// vec3 l = light->position - hit.pos;
+			// float r = length(l);
+			// vec3 I = light->colour/(light->falloff[0]+light->falloff[1]*r+light->falloff[2]*r*r);
+			// l = l/r;
 
-			Hit shadow;
-			rayIntersection(root, hit.pos, l, shadow);
-			if (shadow.t==0 | !SHADOWS_ON){
-				// std::cout << glm::dot(l,hit.normal) << std::endl;
-				//diffuse lighting
-				L = L + I*hit.mat.m_kd*std::max(0.0f,glm::dot(l,hit.normal));
+			// Hit shadow;
+			// rayIntersection(root, hit.pos, l, shadow);
+			// if (shadow.t==0 | !SHADOWS_ON){
+			// 	// std::cout << dot(l,hit.normal) << std::endl;
+			// 	//diffuse lighting
+			// 	L = L + I*hit.mat.m_kd*std::max(0.0f,dot(l,hit.normal));
 
-				//specular Lighting
-				glm::vec3 h = glm::normalize(l-dir);
-				L = L + I*hit.mat.m_ks*pow(std::max(0.0f,glm::dot(h,hit.normal)),p);
-				//std::cout << glm::to_string(n) << std::endl;
-			} else {
-				// std::cout << "shadow" << std::endl;
-			}
+			// 	//specular Lighting
+			// 	vec3 h = normalize(l-dir);
+			// 	L = L + I*hit.mat.m_ks*pow(std::max(0.0f,dot(h,hit.normal)),p);
+			// 	//std::cout << to_string(n) << std::endl;
+			// } else {
+			// 	// std::cout << "shadow" << std::endl;
+			// }
+			SoftShadows(root, dir, p, hit, light, L);
 		}
 		if (recursionDepth < MAX_RECURSION_DEPTH & REFLECTIONS_ON){
-			glm::vec3 R = hit.Reflection(dir);
+			vec3 R = hit.Reflection(dir);
 			float n1;
 			float n2;
 
-			if (glm::dot(dir,hit.normal) < 0){
+			if (dot(dir,hit.normal) < 0){
 				n1 = 1.0f;
 				n2 = N_SOLID;
 			} else {
@@ -202,22 +204,22 @@ glm::vec4 shade(SceneNode * root,
 				n2 = 1.0f;
 			}
 
-			glm::vec3 T;
+			vec3 T;
 			float F = Fresnel(n1,n2,dir,T,hit.normal);
 
 			//std::cout << F << std::endl;
-			glm::vec3 refl = hit.mat.m_ks*F*vec3(shade(root, hit.pos, R, ambient, lights, recursionDepth+1));
-			glm::vec3 refr = hit.mat.m_ks/2*(1.0f-F)*vec3(shade(root, hit.pos, T, ambient, lights, recursionDepth+1));
+			vec3 refl = hit.mat.m_ks*F*vec3(shade(root, hit.pos, R, ambient, lights, recursionDepth+1));
+			vec3 refr = hit.mat.m_ks/2*(1.0f-F)*vec3(shade(root, hit.pos, T, ambient, lights, recursionDepth+1));
 			L = L +refl+refr;
 		}
 	} else {
-		L = glm::vec3(0.0f,0.0f,0.0f);
+		L = vec3(0.0f,0.0f,0.0f);
 	}
 	vec4 Ld = vec4(L,d);
 	return Ld;
 }
 
-void rayIntersection(SceneNode * root, glm::vec3 origin, glm::vec3 dir,Hit &hit){
+void rayIntersection(SceneNode * root, vec3 origin, vec3 dir,Hit &hit){
 	Hit hit_temp;
 	float t;
 	float tol = 0.01f;
@@ -242,7 +244,7 @@ void rayIntersection(SceneNode * root, glm::vec3 origin, glm::vec3 dir,Hit &hit)
 						uint V = H-hit.V*H;
 						// std::cout << hit.U << std::endl;
 						hit.mat.m_kd = geometryNode->m_texture->getColor(U,V);
-						hit.mat.m_ks=glm::vec3(0,0,0);
+						hit.mat.m_ks=vec3(0,0,0);
 
 					} else {
 						hit.mat.m_kd = mat->m_kd;
@@ -267,15 +269,15 @@ void rayIntersection(SceneNode * root, glm::vec3 origin, glm::vec3 dir,Hit &hit)
 	}
 }
 
-float Fresnel(float n1,float n2,glm::vec3 V,glm::vec3 &T, glm::vec3 N){
+float Fresnel(float n1,float n2,vec3 V,vec3 &T, vec3 N){
 
 	float r = n1/n2;
-	float cos_i = std::max(abs(glm::dot(V,N)),1.0f); //entering ray V
+	float cos_i = std::max(abs(dot(V,N)),1.0f); //entering ray V
 	float TIL = 1-r*r*(1-cos_i*cos_i);
 	if (TIL>=0){
-		T = glm::normalize(r*V + (r*cos_i - sqrt(TIL))*N);
+		T = normalize(r*V + (r*cos_i - sqrt(TIL))*N);
 
-		float cos_o = std::max(abs(glm::dot(T,N)),1.0f); //exiting ray T
+		float cos_o = std::max(abs(dot(T,N)),1.0f); //exiting ray T
 
 		float ps = (n1*cos_i-n2*cos_o)/(n1*cos_i+n2*cos_o);
 		float pt = (n1*cos_o-n2*cos_i)/(n1*cos_o+n2*cos_i);
@@ -359,5 +361,43 @@ void superSampling(Image &image1, Image &image2, int scale){
 				}
 			}
 		}
+	}
+}
+
+void SoftShadows(SceneNode * root, vec3 dir, float p, Hit hit, Light* light, vec3 &L){
+
+	Hit shadow[light->samples];
+	// vec3 L_total = vec3(0,0,0);
+	vec3 L_list[light->samples];
+
+	for (int i=0; i<light->samples; i++){
+		vec3 l_rand = vec3((float)rand()/RAND_MAX-0.5f,(float)rand()/RAND_MAX-0.5f,(float)rand()/RAND_MAX-0.5f);
+		l_rand = normalize(l_rand);
+		vec3 l_sample = light->position+light->radius*l_rand;
+		vec3 l = l_sample - hit.pos;
+		float r = length(l);
+		vec3 I = light->colour/(light->falloff[0]+light->falloff[1]*r+light->falloff[2]*r*r);
+		l = l/r;	
+		L_list[i] = vec3(0,0,0);	
+		rayIntersection(root, hit.pos, l, shadow[i]);
+		if (shadow[i].t==0 | !SHADOWS_ON){
+			
+			//diffuse lighting
+			L_list[i] = L_list[i] + I*hit.mat.m_kd*std::max(0.0f,dot(l,hit.normal));
+
+			//specular Lighting
+			vec3 h = normalize(l-dir);
+			L_list[i] = L_list[i] + I*hit.mat.m_ks*pow(std::max(0.0f,dot(h,hit.normal)),p);
+			// L_total += L_list[i];
+		} else {}
+	}
+
+	// std::cout << to_string(L_total) << std::endl;
+	// std::cout << to_string(L_list[0]) << "\n" << std::endl;
+
+	for (int i=0; i<light->samples; i++){
+		if (shadow[i].t==0 | !SHADOWS_ON){
+			L += L_list[i]/light->samples;
+		} else {}	
 	}
 }

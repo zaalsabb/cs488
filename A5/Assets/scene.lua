@@ -36,7 +36,6 @@ sign:rotate('y',215)
 sign:rotate('z',180)
 sign:translate(-50,75,415)
 
-
 wall = gr.quad( 'wall', 'quad.obj')
 wall:set_material(mat3)
 wall:set_texture(wall_texture)
@@ -55,7 +54,8 @@ ground:translate(0, -200, -100)
 scene_root:add_child(ground)
 
 white_light = gr.light({-100.0, 150.0, 400.0}, {0.9, 0.9, 0.9}, {1, 0, 0})
+-- white_arealight = gr.arealight({-100.0, 150.0, 400.0}, {0.9, 0.9, 0.9}, {1, 0, 0},50,20)
 
-gr.render(scene_root, 'scene.png', 512, 512,
+gr.render(scene_root, '../screenshot.png', 512, 512,
 	  {-100, 150, 600}, {100, -200, -800}, {0, 1, 0}, 50,
-	  {0.3, 0.3, 0.3}, {white_light}, {3,5,15}, 1)
+	  {0.3, 0.3, 0.3}, {white_light},{}, {3,15,15}, 1)

@@ -6,7 +6,9 @@
 
 Light::Light()
   : colour(0.0, 0.0, 0.0),
-    position(0.0, 0.0, 0.0)
+    position(0.0, 0.0, 0.0),
+    radius(0),
+    samples(1)
 {
   falloff[0] = 1.0;
   falloff[1] = 0.0;

@@ -10,6 +10,8 @@ struct Light {
   
   glm::vec3 colour;
   glm::vec3 position;
+  float radius;
+  int samples;
   double falloff[3];
 };
 

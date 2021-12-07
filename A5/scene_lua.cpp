@@ -111,6 +111,7 @@ struct gr_texture_ud {
 
 struct gr_bump_ud {
   Bump* bump;
+
 };
 
 struct gr_perlin_ud {
@@ -394,6 +395,7 @@ int gr_light_cmd(lua_State* L)
   Light l;
 
   double col[3];
+  double n[3];
   get_tuple(L, 1, &l.position[0], 3);
   get_tuple(L, 2, col, 3);
   get_tuple(L, 3, l.falloff, 3);
@@ -403,6 +405,36 @@ int gr_light_cmd(lua_State* L)
   data->light = new Light(l);
 
   luaL_newmetatable(L, "gr.light");
+  lua_setmetatable(L, -2);
+
+  return 1;
+}
+
+// Make an Area light
+extern "C"
+int gr_arealight_cmd(lua_State* L)
+{
+  GRLUA_DEBUG_CALL;
+
+  gr_light_ud* data = (gr_light_ud*)lua_newuserdata(L, sizeof(gr_light_ud));
+  data->light = 0;
+
+
+  Light l;
+
+  double col[3];
+  double n[3];
+  get_tuple(L, 1, &l.position[0], 3);
+  get_tuple(L, 2, col, 3);
+  get_tuple(L, 3, l.falloff, 3);
+  l.radius = luaL_checknumber(L, 4);
+  l.samples = luaL_checknumber(L, 5);
+
+  l.colour = glm::vec3(col[0], col[1], col[2]);
+
+  data->light = new Light(l);
+
+  luaL_newmetatable(L, "gr.arealight");
   lua_setmetatable(L, -2);
 
   return 1;
@@ -435,12 +467,12 @@ int gr_render_cmd(lua_State* L)
   get_tuple(L, 9, ambient_data, 3);
   glm::vec3 ambient(ambient_data[0], ambient_data[1], ambient_data[2]);
 
+  // point lights
   luaL_checktype(L, 10, LUA_TTABLE);
-  int light_count = int(lua_rawlen(L, 10));
+  int light_count1 = int(lua_rawlen(L, 10));
 
-  luaL_argcheck(L, light_count >= 1, 10, "Tuple of lights expected");
   std::list<Light*> lights;
-  for (int i = 1; i <= light_count; i++) {
+  for (int i = 1; i <= light_count1; i++) {
     lua_rawgeti(L, 10, i);
     gr_light_ud* ldata = (gr_light_ud*)luaL_checkudata(L, -1, "gr.light");
     luaL_argcheck(L, ldata != 0, 10, "Light expected");
@@ -449,13 +481,28 @@ int gr_render_cmd(lua_State* L)
     lua_pop(L, 1);
   }
 
+  // area lights
+  luaL_checktype(L, 11, LUA_TTABLE);
+  int light_count2 = int(lua_rawlen(L, 11));
+
+  for (int i = 1; i <= light_count2; i++) {
+    lua_rawgeti(L, 11, i);
+    gr_light_ud* ldata = (gr_light_ud*)luaL_checkudata(L, -1, "gr.arealight");
+    luaL_argcheck(L, ldata != 0, 11, "Light expected");
+
+    lights.push_back(ldata->light);
+    lua_pop(L, 1);
+  }  
+
+  luaL_argcheck(L, light_count1+light_count2 >= 1, 10, "Tuples of Point or Area lights expected");
+
   float depthOfField[3];
-  get_tuple(L, 11, depthOfField, 3);
+  get_tuple(L, 12, depthOfField, 3);
   float aperture = depthOfField[0];
   float focalLength = depthOfField[1];
   float screenPosition = depthOfField[2];
 
-  int superSamplingScale = luaL_checknumber(L, 12);
+  int superSamplingScale = luaL_checknumber(L, 13);
 
 	Image im( width, height);
 	A5_Render(root->node, im, eye, view, up, fov, ambient, lights,
@@ -766,6 +813,7 @@ static const luaL_Reg grlib_functions[] = {
   {"texture", gr_texture_cmd},
   {"bump", gr_bump_cmd},
   {"perlin", gr_perlin_cmd},
+  {"arealight", gr_arealight_cmd},
   {0, 0}
 };
 
